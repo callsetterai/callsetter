@@ -1,470 +1,415 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { PhoneCall, ChevronDown, CheckCircle, Bot, Cpu, Zap } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { Check, ChevronDown, Phone, PhoneCall, Rocket, Timer, Zap, X, Play, ShieldCheck } from "lucide-react";
 
-const LOGO_SRC = "/logo-callsetterai.png"; // ensure this exists in /public
-const BUILD_ID = "tailwind-svg-waves-v4";
+/**
+ * CallSetter.ai — Voice AI Agency Landing (Client Build)
+ * - Single CTA only. No pricing. No sticky bar.
+ * - Navbar: How It Works, What You Get, Who It’s For, FAQs.
+ * - Hex/sound-wave visuals and concentric rings behind outcome section.
+ * - Modal posts name/email/phone to your Make webhook.
+ */
 
-function HeroWaves() {
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <svg
-        viewBox="0 0 1600 900"
-        preserveAspectRatio="none"
-        className="absolute inset-0 h-full w-full"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <linearGradient id="gBrand" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#5A46F6" stopOpacity="1" />
-            <stop offset="100%" stopColor="#7C6CFD" stopOpacity="1" />
-          </linearGradient>
+// THEME
+const BRAND = {
+  purple: "#6D5EF3",
+  nearBlack: "#0A0A0F",
+  nearWhite: "#F3F4F6"
+};
 
-          <radialGradient id="wash" cx="50%" cy="10%" r="80%">
-            <stop offset="0%" stopColor="#7C6CFD" stopOpacity="0.22" />
-            <stop offset="55%" stopColor="#000" stopOpacity="0" />
-            <stop offset="100%" stopColor="#0B0A12" stopOpacity="1" />
-          </radialGradient>
+// Path to your uploaded logo in /public
+const LOGO_SRC = "/callsetterai-logo.png";
 
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6.5" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
+// HELPERS
+const formatMoney = (n: number) =>
+  n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
-          {/* Hex pattern */}
-          <path id="hx" d="M14 0 L28 8.1 L28 24.3 L14 32.4 L0 24.3 L0 8.1 Z" />
-          <pattern id="hex" width="42" height="38" patternUnits="userSpaceOnUse">
-            <use href="#hx" fill="none" stroke="rgba(122,101,255,0.22)" strokeWidth="1" x="0" y="0" />
-            <use href="#hx" fill="none" stroke="rgba(90,70,246,0.18)" strokeWidth="1" x="21" y="19" />
-          </pattern>
-
-          <style>{`
-            .driftA { animation: driftA 10s ease-in-out infinite; }
-            .driftB { animation: driftB 12s ease-in-out infinite; }
-            .driftC { animation: driftC 14s ease-in-out infinite; }
-            @keyframes driftA { 0%{transform:translateX(0)} 50%{transform:translateX(-60px)} 100%{transform:translateX(0)} }
-            @keyframes driftB { 0%{transform:translateX(0)} 50%{transform:translateX(70px)} 100%{transform:translateX(0)} }
-            @keyframes driftC { 0%{transform:translateX(0)} 50%{transform:translateX(-40px)} 100%{transform:translateX(0)} }
-          `}</style>
-        </defs>
-
-        {/* Base wash */}
-        <rect width="1600" height="900" fill="url(#wash)" />
-
-        {/* Hex layer */}
-        <g opacity="0.55">
-          <rect x="-80" y="-60" width="1760" height="1020" fill="url(#hex)" />
-        </g>
-
-        {/* VERY OBVIOUS WAVES (glow + animated path) */}
-        <g filter="url(#glow)">
-          {/* Wave 1 */}
-          <g className="driftA">
-            <path
-              fill="none"
-              stroke="url(#gBrand)"
-              strokeWidth="18"
-              strokeLinecap="round"
-              opacity="0.65"
-              d="M-50 260 C 220 120, 480 380, 760 260 S 1320 120, 1650 260"
-            >
-              <animate
-                attributeName="d"
-                dur="5.2s"
-                repeatCount="indefinite"
-                values="
-                  M-50 260 C 220 120, 480 380, 760 260 S 1320 120, 1650 260;
-                  M-50 260 C 220 180, 480 320, 760 260 S 1320 180, 1650 260;
-                  M-50 260 C 220 120, 480 380, 760 260 S 1320 120, 1650 260
-                "
-              />
-            </path>
-
-            <path
-              fill="none"
-              stroke="rgba(255,255,255,0.28)"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray="16 14"
-              d="M-50 260 C 220 120, 480 380, 760 260 S 1320 120, 1650 260"
-            >
-              <animate
-                attributeName="d"
-                dur="5.2s"
-                repeatCount="indefinite"
-                values="
-                  M-50 260 C 220 120, 480 380, 760 260 S 1320 120, 1650 260;
-                  M-50 260 C 220 180, 480 320, 760 260 S 1320 180, 1650 260;
-                  M-50 260 C 220 120, 480 380, 760 260 S 1320 120, 1650 260
-                "
-              />
-            </path>
-          </g>
-
-          {/* Wave 2 */}
-          <g className="driftB">
-            <path
-              fill="none"
-              stroke="url(#gBrand)"
-              strokeWidth="14"
-              strokeLinecap="round"
-              opacity="0.55"
-              d="M-50 340 C 260 240, 500 470, 820 340 S 1340 210, 1650 340"
-            >
-              <animate
-                attributeName="d"
-                dur="6.0s"
-                repeatCount="indefinite"
-                values="
-                  M-50 340 C 260 240, 500 470, 820 340 S 1340 210, 1650 340;
-                  M-50 340 C 260 290, 500 420, 820 340 S 1340 260, 1650 340;
-                  M-50 340 C 260 240, 500 470, 820 340 S 1340 210, 1650 340
-                "
-              />
-            </path>
-          </g>
-
-          {/* Wave 3 */}
-          <g className="driftC" opacity="0.65">
-            <path
-              fill="none"
-              stroke="rgba(124,108,253,0.65)"
-              strokeWidth="10"
-              strokeLinecap="round"
-              d="M-50 430 C 220 360, 520 540, 820 430 S 1380 330, 1650 430"
-            >
-              <animate
-                attributeName="d"
-                dur="6.6s"
-                repeatCount="indefinite"
-                values="
-                  M-50 430 C 220 360, 520 540, 820 430 S 1380 330, 1650 430;
-                  M-50 430 C 220 400, 520 500, 820 430 S 1380 370, 1650 430;
-                  M-50 430 C 220 360, 520 540, 820 430 S 1380 330, 1650 430
-                "
-              />
-            </path>
-          </g>
-        </g>
-
-        {/* Depth overlay */}
-        <rect width="1600" height="900" fill="url(#wash)" opacity="0.55" />
-      </svg>
-
-      {/* Keep overlays LIGHT so waves stay visible */}
-      <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_50%_10%,rgba(122,101,255,0.18),transparent_62%)]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-[#0B0A12]" />
-    </div>
-  );
+function useRaf(callback: (dt: number) => void) {
+  const rafRef = useRef<number>(0);
+  const cbRef = useRef(callback);
+  useEffect(() => {
+    cbRef.current = callback;
+  }, [callback]);
+  useEffect(() => {
+    let t = performance.now();
+    const loop = () => {
+      const now = performance.now();
+      const dt = (now - t) / 1000;
+      t = now;
+      cbRef.current?.(dt);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 }
 
-export default function Page() {
-  const [scrolled, setScrolled] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
-  const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
-  const [submitted, setSubmitted] = useState(false);
+// GLOBAL STYLES (inline for brand vars + micro styles)
+const GlobalStyles = () => (
+  <style>{`
+    :root { --brand: ${BRAND.purple}; --paper: ${BRAND.nearBlack}; --ink: ${BRAND.nearWhite}; }
+    html, body, #root { height: 100%; background: var(--paper); color: var(--ink); }
+    ::selection { background: color-mix(in oklab, var(--brand) 60%, black); color: white; }
 
-  const [leads, setLeads] = useState(300);
-  const [closeRate, setCloseRate] = useState(10);
-  const [revenuePerCustomer, setRevenuePerCustomer] = useState(1500);
+    .btn-primary { background: var(--brand); color: #0B0B10; transition: transform .2s ease, box-shadow .3s ease; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 44px -10px var(--brand); }
 
-  const monthlyLoss = useMemo(
-    () => Math.round(leads * (closeRate / 100) * revenuePerCustomer * 0.2),
-    [leads, closeRate, revenuePerCustomer]
-  );
-  const yearlyLoss = monthlyLoss * 12;
+    .h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.05; letter-spacing: -0.01em; }
+    .h2 { font-size: clamp(1.8rem, 3.6vw, 2.8rem); line-height: 1.08; letter-spacing: -0.01em; }
+    .h3 { font-size: clamp(1.25rem, 2.6vw, 1.75rem); line-height: 1.15; }
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    .odometer { transition: all .35s cubic-bezier(.2,.6,.2,1); }
+    details[open] summary svg { transform: rotate(180deg); }
+  `}</style>
+);
 
-  useEffect(() => {
-    document.body.style.overflow = showForm ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [showForm]);
+// HEX / SOUND WAVE BG
+const HexWaveBackground: React.FC<{ intensity?: number; opacity?: number }> = ({ intensity = 1, opacity = 0.9 }) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  useRaf(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const px = (typeof window !== "undefined" ? window.devicePixelRatio : 1) || 1;
+    const w = canvas.clientWidth * px;
+    const h = canvas.clientHeight * px;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
 
-  function validate() {
-    const next: typeof errors = {};
-    if (!form.name.trim()) next.name = "Required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = "Enter a valid email";
-    if (!/^\+?[0-9\-()\s]{7,}$/.test(form.phone)) next.phone = "Enter a valid phone";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  }
+    ctx.clearRect(0, 0, w, h);
+    const g = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, Math.max(w, h));
+    g.addColorStop(0, "rgba(109,94,243,0.18)");
+    g.addColorStop(1, "rgba(109,94,243,0.02)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!validate()) return;
-    setSubmitted(true);
-    setTimeout(() => {
-      setShowForm(false);
-      setSubmitted(false);
-      setForm({ name: "", email: "", phone: "" });
-    }, 1200);
-  }
+    const size = 24 * px;
+    const hexH = Math.sin(Math.PI / 3) * size;
+    const hexW = size * 1.5;
+    const time = performance.now() / 1200;
 
-  const CTA = ({ label }: { label: string }) => (
-    <button
-      onClick={() => setShowForm(true)}
-      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-md font-bold bg-brand hover:bg-brand2 transition-colors"
-    >
-      <PhoneCall className="h-4 w-4" />
-      {label}
-    </button>
-  );
+    ctx.lineWidth = 1 * px;
+
+    for (let y = -size; y < h + size; y += hexH * 2) {
+      for (let x = -size; x < w + size; x += hexW) {
+        const offset = (Math.floor(y / (hexH * 2)) % 2) * (hexW / 2);
+        const cx = x + offset;
+        const cy = y;
+        const d = Math.hypot(cx - w / 2, cy - h / 2);
+        const wave = Math.sin(d / (80 * intensity) - time) * 0.5 + 0.5;
+        const a = 0.06 + wave * 0.35 * opacity;
+
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const ang = (Math.PI / 3) * i + time * 0.06;
+          const px2 = cx + size * Math.cos(ang);
+          const py2 = cy + size * Math.sin(ang);
+          if (i === 0) ctx.moveTo(px2, py2);
+          else ctx.lineTo(px2, py2);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(255,255,255,${a * 0.35})`;
+        ctx.stroke();
+
+        const r = 1.5 * px + wave * 2.5 * px;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(109,94,243,${a})`;
+        ctx.fill();
+      }
+    }
+
+    const sweepY = (Math.sin(time * 0.7) * 0.5 + 0.5) * h;
+    const sweep = ctx.createLinearGradient(0, sweepY - 80 * px, 0, sweepY + 80 * px);
+    sweep.addColorStop(0, "rgba(109,94,243,0)");
+    sweep.addColorStop(0.5, "rgba(109,94,243,0.25)");
+    sweep.addColorStop(1, "rgba(109,94,243,0)");
+    ctx.fillStyle = sweep;
+    ctx.fillRect(0, sweepY - 120 * px, w, 240 * px);
+  });
 
   return (
-    <div className="bg-ink text-white">
-      {/* VERSION STAMP (proves latest deploy) */}
-      <div className="fixed bottom-2 right-2 z-[9999] text-[10px] text-white/50">
-        {BUILD_ID}
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full opacity-90 [mask-image:radial-gradient(ellipse_at_center,black_60%,transparent_85%)]"
+      aria-hidden
+    />
+  );
+};
+
+// MODAL
+const LeadFormModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const webhook = "https://hook.us2.make.com/685m5t1n8mbrsw27es0jar8s1tqb2ns7";
+
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setStatus("loading");
+    try {
+      const res = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          source: "callsetter.ai-landing",
+          timestamp: new Date().toISOString()
+        })
+      });
+      if (!res.ok) throw new Error("Network error");
+      setStatus("success");
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-[#0E0E16] border border-white/10 shadow-2xl"
+          >
+            <div
+              className="absolute -inset-1 rounded-3xl opacity-30 blur-2xl"
+              style={{ background: `radial-gradient(1200px_600px_at_50%_-20%, ${BRAND.purple}22, transparent 50%)` }}
+            />
+            <div className="relative p-6 md:p-8">
+              <div className="flex items-start justify-between gap-6">
+                <div>
+                  <h3 className="h3 font-semibold">Test The AI Setter</h3>
+                  <p className="text-sm opacity-80 mt-1 max-w-md">
+                    Enter your details. Our AI voice agent will call you within moments to demo how we qualify and book leads automatically.
+                  </p>
+                </div>
+                <button onClick={onClose} className="opacity-70 hover:opacity-100">
+                  <X />
+                </button>
+              </div>
+
+              {status !== "success" ? (
+                <form onSubmit={submit} className="mt-6 grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="text-sm opacity-80">Name</label>
+                    <input
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
+                      placeholder="Jane Doe"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm opacity-80">Email</label>
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
+                      placeholder="jane@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm opacity-80">Phone</label>
+                    <input
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+                  <p className="text-xs opacity-60">
+                    By submitting, you agree to receive a one-time automated call from our demo agent.
+                  </p>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={status === "loading"}
+                      className="btn-primary flex-1 rounded-2xl px-5 py-3 font-semibold flex items-center justify-center gap-2"
+                    >
+                      <Phone className="w-4 h-4" /> {status === "loading" ? "Connecting…" : "Call Me Now"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="mt-8 text-center space-y-4">
+                  <div className="mx-auto w-14 h-14 rounded-2xl grid place-items-center bg-[var(--brand)] text-[#0A0A10]">
+                    <ShieldCheck />
+                  </div>
+                  <h4 className="text-xl font-semibold">You’re queued for a demo call.</h4>
+                  <p className="opacity-80">
+                    Keep your phone nearby. Our AI setter will dial you shortly to show how instant qualification feels.
+                  </p>
+                  <button onClick={onClose} className="btn-primary rounded-2xl px-5 py-3 font-semibold">
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// NAV
+const Nav: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <header className="fixed top-0 left-0 right-0 z-40">
+      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3 backdrop-blur bg-[rgba(10,10,15,.55)] border-b border-white/10">
+        <a href="#top" className="flex items-center gap-3">
+          <img src={LOGO_SRC} alt="CallSetter.ai" className="h-7 md:h-8 object-contain" />
+          <span className="sr-only">CallSetter.ai</span>
+        </a>
+        <nav className="hidden md:flex items-center gap-6 text-sm opacity-85">
+          <a href="#how" className="hover:text-white">How It Works</a>
+          <a href="#get" className="hover:text-white">What You Get</a>
+          <a href="#who" className="hover:text-white">Who It’s For</a>
+          <a href="#faq" className="hover:text-white">FAQs</a>
+          <button onClick={onOpen} className="btn-primary rounded-2xl px-4 py-2 font-semibold">Test Now</button>
+        </nav>
+        <button className="md:hidden rounded-xl border border-white/10 px-3 py-2" onClick={() => setOpen((v) => !v)}>
+          <span className="sr-only">Menu</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="md:hidden bg-[#0E0E16] border-b border-white/10"
+          >
+            <div className="px-4 py-3 grid gap-2">
+              <a onClick={() => setOpen(false)} href="#how" className="py-2">How It Works</a>
+              <a onClick={() => setOpen(false)} href="#get" className="py-2">What You Get</a>
+              <a onClick={() => setOpen(false)} href="#who" className="py-2">Who It’s For</a>
+              <a onClick={() => setOpen(false)} href="#faq" className="py-2">FAQs</a>
+              <button onClick={() => { setOpen(false); onOpen(); }} className="btn-primary rounded-2xl px-4 py-2 font-semibold">Test Now</button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+};
+
+// HERO
+const Hero: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
+
+  return (
+    <section className="relative overflow-hidden pt-16 md:pt-20">
+      <div className="absolute inset-0 -z-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(109,94,243,.10)]/10 via-transparent to-transparent" />
+        <HexWaveBackground />
+        <div className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,255,255,.14),transparent_60%)] mix-blend-overlay" />
       </div>
 
-      {/* NAV */}
-      <header
-        className={`fixed top-0 left-0 w-full z-50 border-b border-white/10 transition-all ${
-          scrolled ? "bg-[#0b0a12]/85 backdrop-blur-md py-2" : "bg-[#0b0a12]/60 py-4"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={LOGO_SRC} alt="Call Setter AI" className="h-8 w-auto" />
-          </div>
-          <CTA label="Test The AI Setter Now" />
-        </div>
-      </header>
-
-      {/* HERO */}
-      <section id="top" className="relative min-h-screen pt-28 overflow-hidden flex items-center">
-        <HeroWaves />
-
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-6xl font-black tracking-tight leading-[1.03]">
-            Increase Your Booked Appointments By 25% In 30 Days Guaranteed
-          </h1>
-
-          <p className="mt-5 text-lg text-white/75 max-w-3xl mx-auto">
-            CallSetter.ai builds AI voice agents that instantly call, qualify, and book inbound leads so high-spending advertisers capture demand before competitors do.
-          </p>
-
-          <div className="mt-7 flex justify-center">
-            <CTA label="Test The AI Setter Now!" />
-          </div>
-
-          {/* CENTERED BADGE (updated text) */}
-          <div className="mt-6 flex justify-center">
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-white/15 bg-white/5 backdrop-blur-md">
-              <span className="h-2.5 w-2.5 rounded-full bg-brand shadow-[0_0_18px_rgba(124,108,253,0.9)]" />
-              <span className="text-sm font-semibold">
-                Call All Leads In Under 60 Seconds
-              </span>
+      <motion.div style={{ y }} className="relative z-10">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mx-auto text-center max-w-3xl">
+            <div className="flex items-center justify-center gap-3 opacity-90">
+              <img src={LOGO_SRC} alt="CallSetter.ai" className="h-8 md:h-10 object-contain" />
             </div>
-          </div>
 
-          <div className="mt-10 flex items-center justify-center gap-2 text-white/60">
-            <span className="text-xs">Scroll</span>
-            <ChevronDown className="h-4 w-4" />
-          </div>
-        </div>
-      </section>
+            <h1 className="h1 font-extrabold mt-6">
+              Increase Your Booked Appointments <span className="text-[var(--brand)]">By 25%</span> In 30 Days <span className="text-[var(--brand)]">Guaranteed</span>
+            </h1>
+            <p className="mt-4 text-lg opacity-80">
+              CallSetter.ai builds AI voice agents that instantly call, qualify, and book inbound leads so high-spending advertisers capture demand before competitors do.
+            </p>
 
-      {/* WHY SPEED-TO-LEAD */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-extrabold">Why Speed-to-Lead Works</h2>
-          <p className="mt-3 text-white/70">The data is clear: the faster you respond, the more deals you close</p>
+            <div className="mt-8 flex items-center justify-center">
+              <button onClick={onOpen} className="btn-primary rounded-2xl px-6 py-4 font-semibold text-base flex items-center gap-2">
+                <PhoneCall className="w-5 h-5" /> Test The AI Setter Now
+              </button>
+            </div>
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6 text-left">
-            {[
-              { num: "391%", title: "Higher Conversion", text: "Leads contacted within the first minute convert dramatically more often." },
-              { num: "10x", title: "More Likely to Connect", text: "Calling within five minutes massively increases contact rates." },
-              { num: "80%", title: "Drop After 5 Minutes", text: "Contact rates collapse when response is delayed." },
-              { num: "24/7", title: "Instant Coverage", text: "Leads are called day, night, and weekends." },
-            ].map((m, i) => (
-              <div key={i} className="bg-panel border border-white/10 rounded-xl p-6">
-                <div className="text-5xl font-black text-brand">{m.num}</div>
-                <div className="mt-2 text-lg font-bold">{m.title}</div>
-                <div className="mt-2 text-sm text-white/70">{m.text}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="py-24 bg-white/2">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-4xl font-extrabold text-center">We Do Everything. You Get Bookings.</h2>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { icon: <Bot className="h-10 w-10 text-brand2" />, title: "We Build It", text: "We custom-build your AI appointment setter around your offer, qualification rules, and booking flow." },
-              { icon: <Cpu className="h-10 w-10 text-brand2" />, title: "We Connect Everything", text: "We connect your CRM, lead forms, ad platforms, phone system, and calendar so every lead routes instantly." },
-              { icon: <Zap className="h-10 w-10 text-brand2" />, title: "Leads Get Booked", text: "Every new lead is called automatically within 60 seconds, qualified, and booked directly on your calendar." },
-            ].map((s, i) => (
-              <div key={i} className="bg-panel border border-white/10 rounded-2xl p-6">
-                <div>{s.icon}</div>
-                <div className="mt-4 text-2xl font-bold">{s.title}</div>
-                <div className="mt-2 text-sm text-white/70">{s.text}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-16 max-w-5xl mx-auto">
-            <h3 className="text-3xl font-extrabold text-center">What You Get</h3>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3">
-              {[
-                "Done-for-you AI voice appointment setter",
-                "Custom scripting and call logic built for your business",
-                "Automatic calling of every new lead within 60 seconds",
-                "Full CRM, lead source, and calendar integration",
-                "Real-time bookings sent directly to your calendar",
-                "Call recordings and transcriptions",
-                "Voice customization including tone, pace, and language",
-                "Automatic follow-up for unanswered leads",
-                "Human transfer to your team when needed",
-                "Ongoing monitoring, updates, and support",
-              ].map((x, i) => (
-                <div key={i} className="flex items-start gap-2 text-white/90">
-                  <CheckCircle className="h-4 w-4 mt-1 text-brand" />
-                  <span className="text-sm">{x}</span>
-                </div>
+            <div className="mt-10 flex items-end justify-center gap-1 h-10" aria-hidden>
+              {[...Array(24)].map((_, i) => (
+                <motion.span
+                  key={i}
+                  className="w-1 rounded-full bg-[var(--brand)]/80"
+                  initial={{ height: 6 }}
+                  animate={{ height: [6, 28, 12, 22, 10, 30, 6] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.05, ease: "easeInOut" }}
+                />
               ))}
             </div>
-            <p className="mt-6 text-center text-xs text-white/55">
-              All setup is handled inside your business. Nothing is outsourced to templates.
-            </p>
           </div>
         </div>
-      </section>
+      </motion.div>
 
-      {/* ROI */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-4xl font-extrabold text-center">Calculate Your Lost Revenue</h2>
-          <p className="mt-3 text-center text-white/70">See what slow follow-up costs you.</p>
-
-          <div className="mt-10 bg-panel border border-white/10 rounded-2xl p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-white/70">Leads Per Month</label>
-                <input
-                  className="mt-2 w-full rounded-md bg-black/40 border border-white/10 p-3 outline-none"
-                  type="number"
-                  value={leads}
-                  onChange={(e) => setLeads(Number(e.target.value))}
-                />
+      <div className="relative z-10 mt-14">
+        <div className="mx-auto max-w-5xl px-4">
+          <div className="rounded-[28px] border border-white/10 bg-white/5 backdrop-blur p-3">
+            <div className="rounded-2xl bg-[#0E0E16] p-4 md:p-6 flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="h3 font-semibold">Instant AI Caller</h3>
+                <p className="opacity-80 max-w-xl mt-1">
+                  See it live: our demo agent dials new leads in under 60 seconds and books directly on the calendar.
+                </p>
               </div>
-              <div>
-                <label className="text-sm text-white/70">Close Rate (%)</label>
-                <input
-                  className="mt-2 w-full rounded-md bg-black/40 border border-white/10 p-3 outline-none"
-                  type="number"
-                  value={closeRate}
-                  onChange={(e) => setCloseRate(Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <label className="text-sm text-white/70">Revenue Per Customer</label>
-                <input
-                  className="mt-2 w-full rounded-md bg-black/40 border border-white/10 p-3 outline-none"
-                  type="number"
-                  value={revenuePerCustomer}
-                  onChange={(e) => setRevenuePerCustomer(Number(e.target.value))}
-                />
-              </div>
-              <p className="text-xs text-white/55">Assumes a 20% lift from faster response time.</p>
-            </div>
-
-            <div className="flex flex-col items-center justify-center text-center">
-              <div className="text-white/70">Estimated Revenue Lost Per Month</div>
-              <div className="mt-2 text-5xl font-black text-brand">
-                ${monthlyLoss.toLocaleString()}
-              </div>
-              <div className="mt-6 text-white/70">Estimated Revenue Lost Per Year</div>
-              <div className="mt-2 text-3xl font-extrabold text-white/85">
-                ${yearlyLoss.toLocaleString()}
-              </div>
-              <div className="mt-8">
-                <CTA label="Test The AI Setter Now!" />
+              <div className="flex items-center gap-3">
+                <button onClick={onOpen} className="btn-primary rounded-2xl px-5 py-3 font-semibold flex items-center gap-2">
+                  <Play size={18} /> Try Now
+                </button>
+                <a href="#how" className="rounded-2xl px-5 py-3 font-semibold border border-white/10">
+                  How it works
+                </a>
               </div>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="py-24 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-5xl font-black">Try Call Setter AI Now!</h2>
-          <div className="mt-8 flex justify-center">
-            <CTA label="Try Now!" />
-          </div>
-        </div>
-      </section>
-
-      {/* MODAL */}
-      {showForm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-          <div className="relative z-10 w-full max-w-md bg-panel border border-white/10 rounded-2xl p-6">
-            <button className="absolute right-3 top-3 text-white/60 hover:text-white" onClick={() => setShowForm(false)}>
-              ✕
-            </button>
-
-            <h3 className="text-2xl font-extrabold">Test The AI Setter</h3>
-            <p className="mt-2 text-sm text-white/70">Enter your details and we’ll connect you with a live AI voice demo.</p>
-
-            <form className="mt-5 space-y-3" onSubmit={onSubmit}>
-              <div>
-                <input
-                  className={`w-full rounded-md bg-black/40 border p-3 outline-none ${errors.name ? "border-red-500" : "border-white/10"}`}
-                  placeholder="Name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-                {errors.name && <div className="mt-1 text-xs text-red-400">{errors.name}</div>}
-              </div>
-
-              <div>
-                <input
-                  className={`w-full rounded-md bg-black/40 border p-3 outline-none ${errors.email ? "border-red-500" : "border-white/10"}`}
-                  placeholder="Email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-                {errors.email && <div className="mt-1 text-xs text-red-400">{errors.email}</div>}
-              </div>
-
-              <div>
-                <input
-                  className={`w-full rounded-md bg-black/40 border p-3 outline-none ${errors.phone ? "border-red-500" : "border-white/10"}`}
-                  placeholder="Phone"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                />
-                {errors.phone && <div className="mt-1 text-xs text-red-400">{errors.phone}</div>}
-              </div>
-
-              <button className="w-full rounded-md bg-brand hover:bg-brand2 transition-colors font-extrabold py-3">
-                Submit
-              </button>
-
-              {submitted && <div className="text-center text-sm text-emerald-400">Success! We'll be in touch shortly.</div>}
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
-}
+};
+
+// DATA
+const Metrics: React.FC = () => {
+  const items = [
+    { kpi: "391%", label: "Higher Conversion", desc: "Leads contacted within the first minute convert dramatically more often." },
+    { kpi: "10x", label: "More Likely to Connect", desc: "Calling within five minutes massively increases contact rates." },
+    { kpi: "80%", label: "Drop After 5 Minutes", desc: "Contact rates collapse when response is delayed." },
+    { kpi: "24/7", label: "Instant Coverage", desc: "Leads are called day, night, and weekends." }
+  ];
+
+  return (
+    <section id="why" className="relative py-16 md:py-24">
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute -top-32 left-0 right-0 mx-auto h-64 w-[90%] rounded-[36px] bg-[radial-gradient(60%_60%_at_50%_50%,rgba(109,94,243,.15),transparent)] blur-2xl" />
+      </div>
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="text-center mb-10">
+          <h2 className="h2 font-bold">Why Speed-to-Lead Works</h2>
+          <p className="opacity-80 mt-2">The data is clear: the faster you respond, the more deals you close.</p>
+        </div>
+        <div className="grid grid-cols-1
