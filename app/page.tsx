@@ -412,4 +412,301 @@ const Metrics: React.FC = () => {
           <h2 className="h2 font-bold">Why Speed-to-Lead Works</h2>
           <p className="opacity-80 mt-2">The data is clear: the faster you respond, the more deals you close.</p>
         </div>
-        <div className="grid grid-cols-1
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {items.map((it, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.05 }}
+              className="rounded-2xl border border-white/10 bg-[#0E0E16]/60 p-6"
+            >
+              <div className="text-5xl font-black tracking-tight text-[var(--brand)]">{it.kpi}</div>
+              <div className="mt-2 font-semibold">{it.label}</div>
+              <div className="mt-1 text-sm opacity-75">{it.desc}</div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// OUTCOME (visuals)
+const Outcome: React.FC = () => (
+  <section className="relative py-16 md:py-24 overflow-hidden">
+    <div className="absolute inset-0 -z-0">
+      <div className="absolute inset-0 bg-[radial-gradient(80%_60%_at_50%_0%,rgba(109,94,243,.14),transparent_60%)]" />
+      <HexWaveBackground intensity={1.1} opacity={0.6} />
+      <svg className="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden>
+        {[...Array(6)].map((_, i) => (
+          <circle key={i} cx="600" cy="280" r={(i + 1) * 80} fill="none" stroke="rgba(109,94,243,0.25)" strokeWidth="1" />
+        ))}
+      </svg>
+    </div>
+    <div className="mx-auto max-w-5xl px-4 text-center relative z-10">
+      <h2 className="h2 font-bold max-w-4xl mx-auto">Respond To All Leads Within 60 Seconds And Take Leads 24/7</h2>
+      <p className="mt-6 text-lg opacity-85 max-w-3xl mx-auto">
+        By calling new leads in under 60 seconds and following up consistently, businesses typically see a 15 to 25 percent
+        increase in booked appointments within the first 30 days.
+      </p>
+      <div className="mt-6 grid gap-2 font-semibold">
+        <div>No changes to ads.</div>
+        <div>No new hires.</div>
+        <div>Just faster, consistent execution.</div>
+      </div>
+    </div>
+  </section>
+);
+
+// HOW IT WORKS + WHAT YOU GET
+const HowItWorks: React.FC = () => (
+  <section id="how" className="relative py-16 md:py-24">
+    <div className="mx-auto max-w-6xl px-4">
+      <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 md:p-10">
+        <div className="text-center">
+          <h3 className="h2 font-bold">We Do Everything. You Get Bookings.</h3>
+          <p className="opacity-80 mt-2">100% done for you. Installed inside your business. Nothing DIY. Nothing half-built.</p>
+        </div>
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { title: "We Build It", desc: "We custom-build your AI appointment setter around your offer, qualification rules, and booking flow.", icon: Rocket },
+            { title: "We Connect Everything", desc: "We connect your CRM, lead forms, ad platforms, phone system, and calendar so every lead routes instantly.", icon: Zap },
+            { title: "Leads Get Booked", desc: "Every new lead is called automatically within 60 seconds, qualified, and booked directly on your calendar.", icon: Timer }
+          ].map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06 }}
+              className="rounded-2xl border border-white/10 bg-[#0E0E16] p-6"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-[var(--brand)]/20 text-[var(--brand)] grid place-items-center">
+                {React.createElement(s.icon)}
+              </div>
+              <div className="mt-4 font-semibold text-xl">{s.title}</div>
+              <div className="mt-2 opacity-80 text-sm">{s.desc}</div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div id="get" className="mt-12 pt-8 border-t border-white/10">
+          <h4 className="h3 font-bold">What You Get</h4>
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              "Done-for-you AI voice appointment setter",
+              "Custom scripting and call logic built for your business",
+              "Automatic calling of every new lead within 60 seconds",
+              "Full CRM, lead source, and calendar integration",
+              "Real-time bookings sent directly to your calendar",
+              "Call recordings and transcriptions",
+              "Voice customization including tone, pace, and language",
+              "Automatic follow-up for unanswered leads",
+              "Human transfer to your team when needed",
+              "Ongoing monitoring, updates, and support"
+            ].map((line, i) => (
+              <div key={i} className="flex items-start gap-3 py-2">
+                <div className="mt-1 w-5 h-5 rounded-full bg-[var(--brand)]/20 text-[var(--brand)] grid place-items-center flex-none">
+                  <Check size={14} />
+                </div>
+                <div className="text-sm md:text-base">{line}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs opacity-60 mt-4">All setup is handled inside your business. Nothing is outsourced to templates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+// SERVICES (optional section kept)
+const Services: React.FC = () => (
+  <section className="relative py-16 md:py-24">
+    <div className="mx-auto max-w-6xl px-4">
+      <h3 className="h2 font-bold max-w-3xl">Everything CallSetter.ai Handles For You</h3>
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          "24/7 AI receptionist answering inbound calls",
+          "Calling every new web lead within 60 seconds",
+          "Reviving old and dead leads automatically",
+          "Confirming booked appointments to reduce no-shows"
+        ].map((s, i) => (
+          <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div className="font-semibold">{s}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+// ROI
+const ROICalc: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
+  const [leads, setLeads] = useState(300);
+  const [closeRate, setCloseRate] = useState(10);
+  const [revPer, setRevPer] = useState(1500);
+  const lift = 0.2;
+
+  const lostMonthly = useMemo(() => Math.max(0, leads * (closeRate / 100) * revPer * lift), [leads, closeRate, revPer]);
+  const lostYearly = lostMonthly * 12;
+  const extraCustomers = useMemo(() => Math.max(0, leads * (closeRate / 100) * lift), [leads, closeRate]);
+
+  return (
+    <section className="relative py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="text-center mb-8">
+          <h3 className="h2 font-bold">Calculate Your Lost Revenue</h3>
+          <p className="opacity-80 mt-2">See what slow follow-up costs you.</p>
+        </div>
+
+        <div className="rounded-[28px] border border-white/10 bg-[#0E0E16]/70 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <div className="grid grid-cols-1 gap-5">
+              <div>
+                <label className="text-sm opacity-80">Leads Per Month</label>
+                <input
+                  type="number"
+                  value={leads}
+                  onChange={(e) => setLeads(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
+                  placeholder="300"
+                />
+              </div>
+              <div>
+                <label className="text-sm opacity-80">Close Rate (%)</label>
+                <div className="text-xs opacity-60">Percent of leads that become customers</div>
+                <input
+                  type="number"
+                  value={closeRate}
+                  onChange={(e) => setCloseRate(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
+                  placeholder="10"
+                />
+              </div>
+              <div>
+                <label className="text-sm opacity-80">Revenue Per Customer</label>
+                <input
+                  type="number"
+                  value={revPer}
+                  onChange={(e) => setRevPer(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
+                  placeholder="1500"
+                />
+              </div>
+              <div className="text-xs opacity-60">Assumes a 20% lift from faster response time.</div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 grid place-items-center">
+            <div className="w-full max-w-sm text-center">
+              <div className="text-sm opacity-80">Estimated Revenue Lost Per Month</div>
+              <div className="odometer text-5xl md:text-6xl font-black tracking-tight text-[var(--brand)] mt-2">{formatMoney(lostMonthly)}</div>
+
+              <div className="mt-6 text-sm opacity-80">Estimated Revenue Lost Per Year</div>
+              <div className="odometer text-4xl md:text-5xl font-extrabold tracking-tight mt-1">{formatMoney(lostYearly)}</div>
+
+              <div className="mt-4 text-xs opacity-70">
+                Estimated additional customers with faster response: <span className="font-semibold">{Math.round(extraCustomers)}</span>
+              </div>
+
+              <div className="mt-8">
+                <button onClick={onOpen} className="btn-primary rounded-2xl px-5 py-3 font-semibold w-full">Test The AI Setter Now!</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// FAQ
+const FAQ: React.FC = () => (
+  <section id="faq" className="relative py-16 md:py-24">
+    <div className="mx-auto max-w-4xl px-4">
+      <h3 className="h2 font-bold text-center">FAQ</h3>
+      <div className="mt-8 space-y-3">
+        {[
+          { q: "Will this sound robotic?", a: "No. The voice is natural and designed for real conversations." },
+          { q: "How fast can we go live?", a: "Most clients are live within a few days." },
+          { q: "Does this integrate with my CRM?", a: "Yes. We support GHL and non-GHL setups." },
+          { q: "What happens if a lead does not answer?", a: "The system follows up automatically based on your rules." }
+        ].map((f, i) => (
+          <details key={i} className="group rounded-2xl border border-white/10 bg-[#0E0E16] p-4">
+            <summary className="flex items-center justify-between gap-4 cursor-pointer list-none">
+              <div className="font-semibold">{f.q}</div>
+              <ChevronDown className="transition-transform" />
+            </summary>
+            <div className="mt-3 opacity-80 text-sm">{f.a}</div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+// FINAL CTA
+const FinalCTA: React.FC<{ onOpen: () => void }> = ({ onOpen }) => (
+  <section className="relative py-20 md:py-28 overflow-hidden">
+    <div className="absolute inset-0 -z-0">
+      <div
+        className="absolute inset-0"
+        style={{ background: `radial-gradient(1200px_600px_at_50%_10%, ${BRAND.purple}22, transparent 60%)` }}
+      />
+      <HexWaveBackground intensity={1.2} opacity={0.8} />
+    </div>
+    <div className="mx-auto max-w-5xl px-4 text-center">
+      <h3 className="h2 font-extrabold">Try Call Setter AI Now!</h3>
+      <p className="mt-3 opacity-80">Highest-contrast section on the page — this is the close.</p>
+      <div className="mt-8 flex items-center justify-center">
+        <button onClick={onOpen} className="btn-primary rounded-2xl px-6 py-4 font-semibold text-base flex items-center gap-2">
+          <PhoneCall className="w-5 h-5" /> Try Now!
+        </button>
+      </div>
+    </div>
+  </section>
+);
+
+// FOOTER
+const Footer: React.FC = () => (
+  <footer className="border-t border-white/10 py-10">
+    <div className="mx-auto max-w-6xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <img src={LOGO_SRC} alt="CallSetter.ai" className="h-7 md:h-8 object-contain" />
+      </div>
+      <div className="text-sm opacity-70">© {new Date().getFullYear()} CallSetter.ai — All rights reserved.</div>
+    </div>
+  </footer>
+);
+
+// PAGE
+export default function CallSetterAI() {
+  const [modal, setModal] = useState(false);
+  useEffect(() => {
+    document.documentElement.style.setProperty("--brand", BRAND.purple);
+  }, []);
+
+  return (
+    <div id="top" className="min-h-screen flex flex-col" style={{ background: BRAND.nearBlack, color: BRAND.nearWhite }}>
+      <GlobalStyles />
+      <Nav onOpen={() => setModal(true)} />
+
+      <main className="flex-1">
+        <Hero onOpen={() => setModal(true)} />
+        <Metrics />
+        <Outcome />
+        <HowItWorks />
+        <Services />
+        <ROICalc onOpen={() => setModal(true)} />
+        <FAQ />
+        <FinalCTA onOpen={() => setModal(true)} />
+      </main>
+
+      <Footer />
+      <LeadFormModal open={modal} onClose={() => setModal(false)} />
+    </div>
+  );
+}
