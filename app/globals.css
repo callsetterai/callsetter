@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global tweaks */
+html, body {
+  background: #0a0a0a;
+  color: white;
+}
