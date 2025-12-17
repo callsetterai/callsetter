@@ -1,3 +1,4 @@
+import "./globals.css";
 export const metadata = {
   title: "Call Setter AI",
   description: "AI voice agents that call, qualify, and book inbound leads fast.",
