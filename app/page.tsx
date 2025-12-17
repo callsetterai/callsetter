@@ -1,32 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { ChevronDown, CheckCircle, Zap, PhoneCall, Cpu, Bot, Sparkles } from "lucide-react";
 
 /**
- * Call Setter AI — Futuristic Hex Waves (Purple)
- * - Inline SVG background: animated hex grid + multi-layer neon waves + particles
- * - Brand purple throughout; rectangular CTAs
- * - Removed all “Book a Demo” buttons (single primary CTA)
- * - Extra visuals/animations section with animated gradient frames
+ * Call Setter AI — AI Hex Waves (Always-On)
+ * - Always-visible, animated hexagon + neon soundwaves (no scroll dependency)
+ * - Brand purple (#5A46F6 / #7C6CFD)
+ * - Primary CTA only (no "Book a Demo")
+ * - Modal form (name, email, phone)
  */
 
 const LOGO_SRC = "/logo-callsetterai.png"; // keep your logo at public/logo-callsetterai.png
 
-/* ==================== HERO BACKGROUND: HEX + WAVES + PARTICLES ==================== */
+/* ================== ALWAYS-ON HERO BACKGROUND (PURE SVG) ==================
+   - Animated hex grid shimmer (pattern drifts)
+   - Multi-layer neon waves (groups drift, subtle liquid distortion)
+   - Floating particles (SVG <animate>)
+   - No framer-motion here -> renders + animates immediately
+========================================================================== */
 
-function NeoHexWavesBG() {
-  // Predefined particle positions (no randomness for SSR determinism)
-  const particles = [
-    { x: 8, y: 22, s: 1.6, d: 6.5, o: 0.45 },
-    { x: 30, y: 36, s: 2.4, d: 7.5, o: 0.35 },
-    { x: 72, y: 18, s: 2.2, d: 8.2, o: 0.4 },
-    { x: 54, y: 28, s: 1.8, d: 7.2, o: 0.5 },
-    { x: 18, y: 12, s: 2.8, d: 9.2, o: 0.35 },
-    { x: 86, y: 30, s: 1.7, d: 6.8, o: 0.45 },
-  ];
-
+function AIHexWavesBG() {
   return (
     <div className="absolute inset-0 -z-20 overflow-hidden">
       <svg
@@ -36,17 +31,24 @@ function NeoHexWavesBG() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* BRAND PURPLES */}
-          <linearGradient id="purp" x1="0" y1="0" x2="1" y2="1">
+          {/* Brand gradients */}
+          <linearGradient id="g-purp-strong" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#5A46F6" />
             <stop offset="100%" stopColor="#7C6CFD" />
           </linearGradient>
-          <linearGradient id="purpSoft" x1="0" y1="0" x2="1" y2="0">
+          <linearGradient id="g-purp-soft" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="rgba(122,101,255,0.55)" />
             <stop offset="100%" stopColor="rgba(90,70,246,0.55)" />
           </linearGradient>
 
-          {/* HEX PATTERN */}
+          {/* Vignette / wash */}
+          <radialGradient id="g-wash" cx="50%" cy="-10%" r="90%">
+            <stop offset="0%" stopColor="#7A65FF" stopOpacity="0.22" />
+            <stop offset="55%" stopColor="#000" stopOpacity="0" />
+            <stop offset="100%" stopColor="#0B0A12" stopOpacity="1" />
+          </radialGradient>
+
+          {/* Hex pattern */}
           <path id="hx" d="M12 0 L24 6.93 L24 20.79 L12 27.72 L0 20.79 L0 6.93 Z" />
           <pattern id="hexp" width="36" height="32" patternUnits="userSpaceOnUse">
             <use href="#hx" fill="none" stroke="rgba(122,101,255,0.45)" strokeWidth="1" x="0" y="0" />
@@ -55,56 +57,73 @@ function NeoHexWavesBG() {
             <use href="#hx" fill="none" stroke="rgba(90,70,246,0.26)" strokeWidth="1" x="54" y="16" />
           </pattern>
 
-          {/* BLUR GLOWS */}
-          <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="b" />
+          {/* Soft glow + liquid effect for waves */}
+          <filter id="f-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
             <feMerge>
-              <feMergeNode in="b" />
+              <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
 
-          {/* VIGNETTE */}
-          <radialGradient id="fade" cx="50%" cy="0%" r="80%">
-            <stop offset="0%" stopColor="#000" stopOpacity="0.35" />
-            <stop offset="60%" stopColor="#000" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#0B0A12" stopOpacity="1" />
-          </radialGradient>
+          <filter id="f-liquid" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="2" seed="3" result="noise">
+              <animate attributeName="baseFrequency" values="0.008;0.012;0.008" dur="8s" repeatCount="indefinite" />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
 
           <style>
             {`
-              @keyframes driftL { 0% { transform: translateX(0); } 50% { transform: translateX(-40px); } 100% { transform: translateX(0); } }
-              @keyframes driftR { 0% { transform: translateX(0); } 50% { transform: translateX(40px); } 100% { transform: translateX(0); } }
-              @keyframes shimmer { 0% { opacity:.28; } 50% { opacity:.5; } 100% { opacity:.28; } }
-              @keyframes updown { 0% { transform: translateY(0); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0); } }
-              .hexLayer { animation: shimmer 12s ease-in-out infinite; }
-              .waveL { animation: driftL 9.2s ease-in-out infinite; }
-              .waveR { animation: driftR 10.2s ease-in-out infinite; }
+              /* Pattern & group motion so waves are visible immediately */
+              .hexLayer {
+                animation: hexFloat 12s ease-in-out infinite;
+                opacity: .22;
+              }
+              @keyframes hexFloat {
+                0%   { transform: translateY(12px); opacity: .28; }
+                50%  { transform: translateY(0px);  opacity: .5; }
+                100% { transform: translateY(12px); opacity: .28; }
+              }
+
+              .waveL { animation: driftL 9s ease-in-out infinite; }
+              .waveR { animation: driftR 10.5s ease-in-out infinite; }
+
+              @keyframes driftL {
+                0% { transform: translateX(0) }
+                50% { transform: translateX(-50px) }
+                100% { transform: translateX(0) }
+              }
+              @keyframes driftR {
+                0% { transform: translateX(0) }
+                50% { transform: translateX(50px) }
+                100% { transform: translateX(0) }
+              }
             `}
           </style>
         </defs>
 
-        {/* PURPLE WASH */}
-        <rect x="0" y="0" width="1600" height="900" fill="url(#fade)" />
+        {/* Background wash */}
+        <rect x="0" y="0" width="1600" height="900" fill="url(#g-wash)" />
 
-        {/* HEX BACKDROP */}
-        <g className="hexLayer" opacity="0.22">
+        {/* Hex backdrop */}
+        <g className="hexLayer">
           <rect x="-80" y="-40" width="1760" height="980" fill="url(#hexp)" />
         </g>
 
-        {/* NEON WAVES (multiple layers for depth) */}
-        <g filter="url(#softGlow)">
-          {/* Middle */}
-          <g className="waveL">
+        {/* Neon waves (multiple layers) */}
+        <g filter="url(#f-glow)">
+          {/* Middle (soft) */}
+          <g className="waveL" filter="url(#f-liquid)">
             <path
-              d="M0 460 C 200 360, 460 560, 760 460 S 1320 360, 1600 460"
+              d="M0 460 C 220 360, 480 560, 760 460 S 1320 360, 1600 460"
               fill="none"
-              stroke="url(#purpSoft)"
+              stroke="url(#g-purp-soft)"
               strokeWidth="3"
               strokeLinecap="round"
             />
           </g>
-          {/* Upper accent */}
+          {/* Upper accent (white dashed) */}
           <g className="waveR" opacity="0.9">
             <path
               d="M0 380 C 240 320, 520 480, 820 380 S 1340 320, 1600 380"
@@ -112,22 +131,21 @@ function NeoHexWavesBG() {
               stroke="rgba(255,255,255,0.22)"
               strokeWidth="2"
               strokeLinecap="round"
-              strokeDasharray="6 8"
+              strokeDasharray="8 10"
             />
           </g>
-          {/* Lower thick */}
-          <g className="waveL">
+          {/* Lower strong purple */}
+          <g className="waveL" opacity="0.85">
             <path
               d="M0 560 C 240 500, 520 640, 820 560 S 1340 500, 1600 560"
               fill="none"
-              stroke="url(#purp)"
+              stroke="url(#g-purp-strong)"
               strokeWidth="4"
               strokeLinecap="round"
-              opacity="0.75"
             />
           </g>
-          {/* Faint far wave */}
-          <g className="waveR" opacity="0.5">
+          {/* Far faint */}
+          <g className="waveR" opacity="0.45">
             <path
               d="M0 620 C 200 580, 460 700, 760 620 S 1320 580, 1600 620"
               fill="none"
@@ -138,27 +156,30 @@ function NeoHexWavesBG() {
           </g>
         </g>
 
-        {/* PARTICLES */}
-        {particles.map((p, i) => (
-          <motion.circle
-            key={i}
-            cx={(p.x / 100) * 1600}
-            cy={(p.y / 100) * 900}
-            r={p.s * 2.2}
-            fill="#7C6CFD"
-            initial={{ opacity: 0.15 }}
-            animate={{ opacity: [0.15, p.o, 0.15], cy: [(p.y / 100) * 900, (p.y / 100) * 900 - 12, (p.y / 100) * 900] }}
-            transition={{ duration: p.d, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
-          />
+        {/* Floating particles (SVG animate -> start immediately) */}
+        {[
+          { x: 120, y: 640, r: 5, d: 7.2 },
+          { x: 260, y: 520, r: 4, d: 6.8 },
+          { x: 980, y: 420, r: 6, d: 8.4 },
+          { x: 1340, y: 560, r: 4, d: 7.6 },
+          { x: 420, y: 400, r: 3.5, d: 6.0 },
+          { x: 780, y: 660, r: 4.5, d: 7.8 },
+        ].map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={p.r} fill="#7C6CFD" opacity="0.55">
+            <animate attributeName="cy" values={`${p.y};${p.y - 16};${p.y}`} dur={`${p.d}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur={`${p.d}s`} repeatCount="indefinite" />
+          </circle>
         ))}
       </svg>
-      {/* Subtle extra gradient wash */}
+
+      {/* Extra gradient layers to deepen the top */}
       <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(122,101,255,0.22),transparent_60%),radial-gradient(900px_460px_at_90%_10%,rgba(90,70,246,0.20),transparent_70%)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#0B0A12]" />
     </div>
   );
 }
 
-/* =============================================================================== */
+/* ======================================================================= */
 
 export default function Page() {
   const [leads, setLeads] = useState(300);
@@ -169,9 +190,6 @@ export default function Page() {
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
   const [submitted, setSubmitted] = useState(false);
-
-  const { scrollY } = useScroll();
-  const heroFade = useTransform(scrollY, [0, 240], [1, 0.9]);
 
   const monthlyLoss = useMemo(
     () => Math.round(leads * (closeRate / 100) * revenuePerCustomer * 0.2),
@@ -216,30 +234,34 @@ export default function Page() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    // Optional: connect your voice agent webhook:
-    // await fetch("https://YOUR_WEBHOOK_URL", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(form) });
+    // Optional: POST to your voice-agent webhook
+    // await fetch("https://YOUR_WEBHOOK_URL", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     setSubmitted(true);
     setTimeout(() => { setShowForm(false); setSubmitted(false); setForm({ name: "", email: "", phone: "" }); }, 1200);
   }
 
   return (
     <div className="relative">
-      {/* ============================ NAVBAR ============================ */}
+      {/* NAVBAR */}
       <header className={`fixed top-0 left-0 w-full z-50 border-b border-white/10 transition-all duration-300 ${scrolled ? "bg-[#0b0a12]/85 backdrop-blur-md py-2" : "bg-[#0b0a12]/60 py-4"}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3">
             <img src={LOGO_SRC} alt="Call Setter AI" className="h-8 w-auto" />
             <span className="sr-only">Call Setter AI</span>
           </a>
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center justify-center font-semibold px-6 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white">
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center justify-center font-semibold px-6 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white"
+          >
             <PhoneCall className="w-4 h-4 mr-2" /> Test The AI Setter Now
           </button>
         </div>
       </header>
 
-      {/* ============================ HERO ============================ */}
-      <motion.section id="top" style={{ opacity: heroFade }} className="relative min-h-screen flex flex-col justify-center items-center text-center overflow-hidden pt-28">
-        <NeoHexWavesBG />
+      {/* HERO */}
+      <section id="top" className="relative min-h-screen flex flex-col justify-center items-center text-center overflow-hidden pt-28">
+        <AIHexWavesBG />
+
         <motion.h1 {...fadeUp} className="text-5xl md:text-6xl font-extrabold max-w-4xl leading-tight tracking-tight">
           Increase Your Booked Appointments By 25% In 30 Days Guaranteed
         </motion.h1>
@@ -248,12 +270,14 @@ export default function Page() {
         </motion.p>
 
         <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.15 }} className="flex gap-3 mt-8">
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center justify-center font-semibold px-8 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white">
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center justify-center font-semibold px-8 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white"
+          >
             <PhoneCall className="w-5 h-5 mr-2" /> Test The AI Setter Now!
           </button>
         </motion.div>
 
-        {/* Small badges for life */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="absolute top-28 left-6 hidden md:flex items-center gap-2 text-xs bg-white/5 border border-white/10 rounded-md px-3 py-1">
           <Sparkles className="w-3.5 h-3.5 text-[#7C6CFD]" /> Real-time lead calls
         </motion.div>
@@ -262,9 +286,9 @@ export default function Page() {
           <span className="text-xs">Scroll</span>
           <ChevronDown className="w-4 h-4" />
         </motion.div>
-      </motion.section>
+      </section>
 
-      {/* ============================ WHY ============================ */}
+      {/* WHY */}
       <section id="why" className="py-20 text-center">
         <div className="max-w-7xl mx-auto px-6">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-4">Why Speed-to-Lead Works</motion.h2>
@@ -288,7 +312,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ OUTCOME ============================ */}
+      {/* OUTCOME */}
       <section className="py-24 bg-[#0f0e18]">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-6 max-w-3xl mx-auto">
@@ -303,7 +327,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ SHOWCASE VISUALS (animated frames) ============================ */}
+      {/* SHOWCASE VISUALS */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6">
           <motion.h3 {...fadeUp} className="text-3xl font-bold text-center mb-10">Inside the Experience</motion.h3>
@@ -318,14 +342,11 @@ export default function Page() {
                 className="relative rounded-xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#1a1730] to-[#0e0c1a]"
               >
                 <div className="absolute inset-0 opacity-50" style={{ backgroundImage: "radial-gradient(150px 60px at 20% 20%, rgba(122,101,255,0.22), transparent 70%), radial-gradient(120px 50px at 80% 60%, rgba(90,70,246,0.18), transparent 70%)" }} />
-                {/* animated gradient ring */}
-                <motion.div className="absolute -inset-[1px] rounded-xl" style={{ background: "conic-gradient(from 0deg, rgba(122,101,255,0.35), rgba(255,255,255,0.08), rgba(90,70,246,0.35), rgba(255,255,255,0.08), rgba(122,101,255,0.35))" }} animate={{ rotate: 360 }} transition={{ duration: 18, repeat: Infinity, ease: "linear" }} />
+                {/* animated sweep */}
+                <motion.div className="absolute inset-0" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(124,108,253,0.22) 50%, transparent 100%)" }} initial={{ x: "-100%" }} whileInView={{ x: ["-100%", "100%"] }} viewport={{ once: true }} transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 1.2, ease: "easeInOut" }} />
                 <div className="relative p-4">
                   <div className="text-sm text-white/70 mb-3">{t}</div>
-                  {/* placeholder visual panel */}
-                  <div className="h-44 rounded-md bg-black/40 border border-white/10 overflow-hidden">
-                    <motion.div className="h-full w-1/2 bg-gradient-to-r from-[#5A46F6]/20 to-transparent" initial={{ x: "-50%" }} animate={{ x: ["-50%", "150%"] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} />
-                  </div>
+                  <div className="h-44 rounded-md bg-black/40 border border-white/10 overflow-hidden" />
                 </div>
               </motion.div>
             ))}
@@ -333,7 +354,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ HOW + WHAT YOU GET ============================ */}
+      {/* HOW + WHAT YOU GET */}
       <section id="how" className="py-24">
         <div className="max-w-7xl mx-auto px-6">
           <motion.h2 {...fadeUp} className="text-4xl font-bold text-center mb-12">We Do Everything. You Get Bookings.</motion.h2>
@@ -376,7 +397,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ SERVICES ============================ */}
+      {/* SERVICES */}
       <section id="services" className="py-24 bg-[#0f0e18]">
         <div className="max-w-7xl mx-auto px-6">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-12 text-center">Everything CallSetter.ai Handles For You</motion.h2>
@@ -395,7 +416,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ ROI ============================ */}
+      {/* ROI */}
       <section id="roi" className="py-24">
         <div className="max-w-7xl mx-auto px-6">
           <motion.h2 {...fadeUp} className="text-4xl font-bold text-center mb-4">Calculate Your Lost Revenue</motion.h2>
@@ -428,7 +449,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ FAQ ============================ */}
+      {/* FAQ */}
       <section id="faq" className="py-24 bg-[#0f0e18]">
         <div className="max-w-7xl mx-auto px-6">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-12 text-center">FAQ</motion.h2>
@@ -450,7 +471,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ FINAL CTA ============================ */}
+      {/* FINAL CTA */}
       <section id="cta" className="py-24 text-center relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(800px_320px_at_50%_0%,rgba(122,101,255,0.22),transparent_70%)]" />
         <motion.h2 {...fadeUp} className="text-5xl font-bold mb-6">Try Call Setter AI Now!</motion.h2>
@@ -461,7 +482,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ MODAL FORM ============================ */}
+      {/* MODAL FORM */}
       {showForm && (
         <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowForm(false)} />
