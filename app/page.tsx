@@ -1,185 +1,208 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown, CheckCircle, Zap, PhoneCall, Cpu, Bot, Sparkles } from "lucide-react";
 
+const LOGO_SRC = "/logo-callsetterai.png";
+
+// Brand purple (match your logo)
+const PURPLE = "#5A46F6";
+const PURPLE_2 = "#7C6CFD";
+const INK = "#0B0A12";
+
 /**
- * Call Setter AI — AI Hex Waves (Always-On)
- * - Always-visible, animated hexagon + neon soundwaves (no scroll dependency)
- * - Brand purple (#5A46F6 / #7C6CFD)
- * - Primary CTA only (no "Book a Demo")
- * - Modal form (name, email, phone)
+ * VIDEO-LIKE HERO BACKGROUND (Canvas)
+ * - Always runs (no scroll trigger)
+ * - Renders purple wave energy + hex field + particles
+ * - Looks like a looping “video” without uploading actual video files
  */
+function HeroWaveVideoBG() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafRef = useRef<number | null>(null);
 
-const LOGO_SRC = "/logo-callsetterai.png"; // keep your logo at public/logo-callsetterai.png
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-/* ================== ALWAYS-ON HERO BACKGROUND (PURE SVG) ==================
-   - Animated hex grid shimmer (pattern drifts)
-   - Multi-layer neon waves (groups drift, subtle liquid distortion)
-   - Floating particles (SVG <animate>)
-   - No framer-motion here -> renders + animates immediately
-========================================================================== */
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) return;
 
-function AIHexWavesBG() {
+    let w = 0;
+    let h = 0;
+    let dpr = 1;
+
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const onResize = () => resize();
+    resize();
+    window.addEventListener("resize", onResize, { passive: true });
+
+    // Particles (deterministic-ish)
+    const particles = Array.from({ length: 28 }).map((_, i) => {
+      const seed = (i + 1) * 997;
+      const rand = (n: number) => {
+        const x = Math.sin(seed * n) * 10000;
+        return x - Math.floor(x);
+      };
+      return {
+        x: rand(1) * w,
+        y: rand(2) * h,
+        r: 1.2 + rand(3) * 2.2,
+        sp: 0.15 + rand(4) * 0.5,
+        ph: rand(5) * Math.PI * 2,
+      };
+    });
+
+    // Helpers
+    const hexR = 14;
+    const hexH = Math.sin(Math.PI / 3) * hexR;
+
+    const drawHex = (x: number, y: number, a: number) => {
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) {
+        const ang = (Math.PI / 3) * k + Math.PI / 6;
+        const px = x + Math.cos(ang) * hexR;
+        const py = y + Math.sin(ang) * hexR;
+        if (k === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = `rgba(122,101,255,${a})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    };
+
+    const draw = (tms: number) => {
+      const t = tms * 0.001;
+
+      // Clear
+      ctx.clearRect(0, 0, w, h);
+
+      // Base vignette wash
+      const grad = ctx.createRadialGradient(w * 0.5, h * 0.1, 0, w * 0.5, h * 0.2, Math.max(w, h));
+      grad.addColorStop(0, "rgba(122,101,255,0.18)");
+      grad.addColorStop(0.55, "rgba(0,0,0,0)");
+      grad.addColorStop(1, INK);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Hex field (subtle drift)
+      const driftX = Math.sin(t * 0.35) * 18;
+      const driftY = Math.cos(t * 0.28) * 12;
+
+      ctx.save();
+      ctx.globalAlpha = 0.22 + 0.08 * Math.sin(t * 0.7);
+      const xStep = hexR * 1.5;
+      const yStep = hexH * 2;
+      for (let row = -2; row < h / yStep + 3; row++) {
+        for (let col = -2; col < w / xStep + 3; col++) {
+          const x = col * xStep + (row % 2 ? xStep * 0.5 : 0) + driftX;
+          const y = row * yStep + driftY;
+          // mask: more visible near top center like callers.ai
+          const nx = (x - w * 0.5) / (w * 0.5);
+          const ny = (y - h * 0.25) / (h * 0.65);
+          const falloff = Math.max(0, 1 - (nx * nx + ny * ny));
+          drawHex(x, y, 0.25 * falloff);
+        }
+      }
+      ctx.restore();
+
+      // Wave energy bands (video-like)
+      const waveCount = 5;
+      for (let i = 0; i < waveCount; i++) {
+        const phase = t * (0.9 + i * 0.12);
+        const baseY = h * (0.42 + i * 0.05);
+        const amp = 26 + i * 7;
+        const freq = 0.008 + i * 0.0012;
+
+        // glow underlay
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.strokeStyle = i % 2 === 0 ? PURPLE_2 : PURPLE;
+        ctx.lineWidth = 10;
+        ctx.shadowColor = i % 2 === 0 ? "rgba(124,108,253,0.55)" : "rgba(90,70,246,0.55)";
+        ctx.shadowBlur = 22;
+
+        ctx.beginPath();
+        for (let x = 0; x <= w; x += 10) {
+          const n =
+            Math.sin(phase + x * freq) * 0.9 +
+            Math.sin(phase * 1.3 + x * freq * 0.6) * 0.55 +
+            Math.sin(phase * 0.7 + x * freq * 1.8) * 0.25;
+          const y = baseY + n * amp;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // crisp line
+        ctx.save();
+        ctx.globalAlpha = 0.65;
+        ctx.lineWidth = i === 1 ? 2.4 : 2;
+        ctx.strokeStyle = i === 2 ? "rgba(255,255,255,0.22)" : `rgba(122,101,255,${0.65 - i * 0.08})`;
+        if (i === 2) ctx.setLineDash([10, 12]);
+        else ctx.setLineDash([]);
+
+        ctx.beginPath();
+        for (let x = 0; x <= w; x += 8) {
+          const n =
+            Math.sin(phase + x * freq) * 0.9 +
+            Math.sin(phase * 1.3 + x * freq * 0.6) * 0.55 +
+            Math.sin(phase * 0.7 + x * freq * 1.8) * 0.25;
+          const y = baseY + n * amp;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Particles
+      ctx.save();
+      for (const p of particles) {
+        p.ph += 0.01 * p.sp;
+        p.y -= p.sp;
+        if (p.y < -20) p.y = h + 20;
+
+        const tw = 0.35 + 0.25 * Math.sin(t * 2 + p.ph);
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(124,108,253,${0.22 + tw})`;
+        ctx.arc(p.x, p.y + Math.sin(t + p.ph) * 10, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
   return (
-    <div className="absolute inset-0 -z-20 overflow-hidden">
-      <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox="0 0 1600 900"
-        preserveAspectRatio="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          {/* Brand gradients */}
-          <linearGradient id="g-purp-strong" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#5A46F6" />
-            <stop offset="100%" stopColor="#7C6CFD" />
-          </linearGradient>
-          <linearGradient id="g-purp-soft" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="rgba(122,101,255,0.55)" />
-            <stop offset="100%" stopColor="rgba(90,70,246,0.55)" />
-          </linearGradient>
-
-          {/* Vignette / wash */}
-          <radialGradient id="g-wash" cx="50%" cy="-10%" r="90%">
-            <stop offset="0%" stopColor="#7A65FF" stopOpacity="0.22" />
-            <stop offset="55%" stopColor="#000" stopOpacity="0" />
-            <stop offset="100%" stopColor="#0B0A12" stopOpacity="1" />
-          </radialGradient>
-
-          {/* Hex pattern */}
-          <path id="hx" d="M12 0 L24 6.93 L24 20.79 L12 27.72 L0 20.79 L0 6.93 Z" />
-          <pattern id="hexp" width="36" height="32" patternUnits="userSpaceOnUse">
-            <use href="#hx" fill="none" stroke="rgba(122,101,255,0.45)" strokeWidth="1" x="0" y="0" />
-            <use href="#hx" fill="none" stroke="rgba(90,70,246,0.32)" strokeWidth="1" x="36" y="0" />
-            <use href="#hx" fill="none" stroke="rgba(122,101,255,0.28)" strokeWidth="1" x="18" y="16" />
-            <use href="#hx" fill="none" stroke="rgba(90,70,246,0.26)" strokeWidth="1" x="54" y="16" />
-          </pattern>
-
-          {/* Soft glow + liquid effect for waves */}
-          <filter id="f-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-
-          <filter id="f-liquid" x="-30%" y="-30%" width="160%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="2" seed="3" result="noise">
-              <animate attributeName="baseFrequency" values="0.008;0.012;0.008" dur="8s" repeatCount="indefinite" />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-
-          <style>
-            {`
-              /* Pattern & group motion so waves are visible immediately */
-              .hexLayer {
-                animation: hexFloat 12s ease-in-out infinite;
-                opacity: .22;
-              }
-              @keyframes hexFloat {
-                0%   { transform: translateY(12px); opacity: .28; }
-                50%  { transform: translateY(0px);  opacity: .5; }
-                100% { transform: translateY(12px); opacity: .28; }
-              }
-
-              .waveL { animation: driftL 9s ease-in-out infinite; }
-              .waveR { animation: driftR 10.5s ease-in-out infinite; }
-
-              @keyframes driftL {
-                0% { transform: translateX(0) }
-                50% { transform: translateX(-50px) }
-                100% { transform: translateX(0) }
-              }
-              @keyframes driftR {
-                0% { transform: translateX(0) }
-                50% { transform: translateX(50px) }
-                100% { transform: translateX(0) }
-              }
-            `}
-          </style>
-        </defs>
-
-        {/* Background wash */}
-        <rect x="0" y="0" width="1600" height="900" fill="url(#g-wash)" />
-
-        {/* Hex backdrop */}
-        <g className="hexLayer">
-          <rect x="-80" y="-40" width="1760" height="980" fill="url(#hexp)" />
-        </g>
-
-        {/* Neon waves (multiple layers) */}
-        <g filter="url(#f-glow)">
-          {/* Middle (soft) */}
-          <g className="waveL" filter="url(#f-liquid)">
-            <path
-              d="M0 460 C 220 360, 480 560, 760 460 S 1320 360, 1600 460"
-              fill="none"
-              stroke="url(#g-purp-soft)"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </g>
-          {/* Upper accent (white dashed) */}
-          <g className="waveR" opacity="0.9">
-            <path
-              d="M0 380 C 240 320, 520 480, 820 380 S 1340 320, 1600 380"
-              fill="none"
-              stroke="rgba(255,255,255,0.22)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray="8 10"
-            />
-          </g>
-          {/* Lower strong purple */}
-          <g className="waveL" opacity="0.85">
-            <path
-              d="M0 560 C 240 500, 520 640, 820 560 S 1340 500, 1600 560"
-              fill="none"
-              stroke="url(#g-purp-strong)"
-              strokeWidth="4"
-              strokeLinecap="round"
-            />
-          </g>
-          {/* Far faint */}
-          <g className="waveR" opacity="0.45">
-            <path
-              d="M0 620 C 200 580, 460 700, 760 620 S 1320 580, 1600 620"
-              fill="none"
-              stroke="rgba(255,255,255,0.10)"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </g>
-        </g>
-
-        {/* Floating particles (SVG animate -> start immediately) */}
-        {[
-          { x: 120, y: 640, r: 5, d: 7.2 },
-          { x: 260, y: 520, r: 4, d: 6.8 },
-          { x: 980, y: 420, r: 6, d: 8.4 },
-          { x: 1340, y: 560, r: 4, d: 7.6 },
-          { x: 420, y: 400, r: 3.5, d: 6.0 },
-          { x: 780, y: 660, r: 4.5, d: 7.8 },
-        ].map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={p.r} fill="#7C6CFD" opacity="0.55">
-            <animate attributeName="cy" values={`${p.y};${p.y - 16};${p.y}`} dur={`${p.d}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.35;0.75;0.35" dur={`${p.d}s`} repeatCount="indefinite" />
-          </circle>
-        ))}
-      </svg>
-
-      {/* Extra gradient layers to deepen the top */}
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(122,101,255,0.22),transparent_60%),radial-gradient(900px_460px_at_90%_10%,rgba(90,70,246,0.20),transparent_70%)]" />
+    <div className="absolute inset-0 -z-20">
+      <canvas ref={canvasRef} className="w-full h-full" />
+      {/* extra blending overlays */}
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(122,101,255,0.18),transparent_60%),radial-gradient(900px_460px_at_90%_10%,rgba(90,70,246,0.16),transparent_70%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#0B0A12]" />
     </div>
   );
 }
 
-/* ======================================================================= */
+/* =============================== PAGE =============================== */
 
 export default function Page() {
   const [leads, setLeads] = useState(300);
@@ -234,16 +257,37 @@ export default function Page() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
-    // Optional: POST to your voice-agent webhook
-    // await fetch("https://YOUR_WEBHOOK_URL", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     setSubmitted(true);
-    setTimeout(() => { setShowForm(false); setSubmitted(false); setForm({ name: "", email: "", phone: "" }); }, 1200);
+    setTimeout(() => {
+      setShowForm(false);
+      setSubmitted(false);
+      setForm({ name: "", email: "", phone: "" });
+    }, 1200);
   }
 
+  const PrimaryCTA = ({ large }: { large?: boolean }) => (
+    <button
+      onClick={() => setShowForm(true)}
+      className={`inline-flex items-center justify-center font-semibold transition-colors duration-200 bg-[${PURPLE}] hover:bg-[${PURPLE_2}] text-white rounded-md ${
+        large ? "px-10 py-4 text-lg font-bold" : "px-8 py-3"
+      }`}
+      style={{ backgroundColor: PURPLE }}
+      onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = PURPLE_2))}
+      onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = PURPLE))}
+    >
+      <PhoneCall className={`${large ? "w-6 h-6" : "w-5 h-5"} mr-2`} />
+      {large ? "Try Now!" : "Test The AI Setter Now!"}
+    </button>
+  );
+
   return (
-    <div className="relative">
+    <div className="bg-[#0B0A12] text-white overflow-x-hidden">
       {/* NAVBAR */}
-      <header className={`fixed top-0 left-0 w-full z-50 border-b border-white/10 transition-all duration-300 ${scrolled ? "bg-[#0b0a12]/85 backdrop-blur-md py-2" : "bg-[#0b0a12]/60 py-4"}`}>
+      <header
+        className={`fixed top-0 left-0 w-full z-50 border-b border-white/10 transition-all duration-300 ${
+          scrolled ? "bg-[#0b0a12]/85 backdrop-blur-md py-2" : "bg-[#0b0a12]/60 py-4"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3">
             <img src={LOGO_SRC} alt="Call Setter AI" className="h-8 w-auto" />
@@ -251,7 +295,10 @@ export default function Page() {
           </a>
           <button
             onClick={() => setShowForm(true)}
-            className="inline-flex items-center justify-center font-semibold px-6 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white"
+            className="inline-flex items-center justify-center font-semibold px-6 py-3 rounded-md transition-colors duration-200 text-white"
+            style={{ backgroundColor: PURPLE }}
+            onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = PURPLE_2))}
+            onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = PURPLE))}
           >
             <PhoneCall className="w-4 h-4 mr-2" /> Test The AI Setter Now
           </button>
@@ -259,26 +306,30 @@ export default function Page() {
       </header>
 
       {/* HERO */}
-      <section id="top" className="relative min-h-screen flex flex-col justify-center items-center text-center overflow-hidden pt-28">
-        <AIHexWavesBG />
+      <section
+        id="top"
+        className="relative min-h-screen flex flex-col justify-center items-center text-center overflow-hidden pt-28"
+      >
+        <HeroWaveVideoBG />
 
         <motion.h1 {...fadeUp} className="text-5xl md:text-6xl font-extrabold max-w-4xl leading-tight tracking-tight">
           Increase Your Booked Appointments By 25% In 30 Days Guaranteed
         </motion.h1>
+
         <motion.p {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.08 }} className="text-lg text-white/70 max-w-2xl mt-4">
           CallSetter.ai builds AI voice agents that instantly call, qualify, and book inbound leads so high-spending advertisers capture demand before competitors do.
         </motion.p>
 
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.15 }} className="flex gap-3 mt-8">
-          <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center justify-center font-semibold px-8 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white"
-          >
-            <PhoneCall className="w-5 h-5 mr-2" /> Test The AI Setter Now!
-          </button>
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.15 }} className="mt-8">
+          <PrimaryCTA />
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="absolute top-28 left-6 hidden md:flex items-center gap-2 text-xs bg-white/5 border border-white/10 rounded-md px-3 py-1">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="absolute top-28 left-6 hidden md:flex items-center gap-2 text-xs bg-white/5 border border-white/10 rounded-md px-3 py-1"
+        >
           <Sparkles className="w-3.5 h-3.5 text-[#7C6CFD]" /> Real-time lead calls
         </motion.div>
 
@@ -302,8 +353,15 @@ export default function Page() {
               { num: "80%", title: "Drop After 5 Minutes", text: "Contact rates collapse when response is delayed." },
               { num: "24/7", title: "Instant Coverage", text: "Leads are called day, night, and weekends." },
             ].map((m, i) => (
-              <motion.div key={i} initial={{ y: 10, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ duration: 0.5, delay: i * 0.05 }} viewport={{ once: true }} className="bg-[#11101a] border border-white/10 rounded-xl p-6 text-left">
-                <div className="text-5xl font-extrabold text-[#5A46F6] mb-3">{m.num}</div>
+              <motion.div
+                key={i}
+                initial={{ y: 10, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: i * 0.05 }}
+                viewport={{ once: true }}
+                className="bg-[#11101a] border border-white/10 rounded-xl p-6 text-left"
+              >
+                <div className="text-5xl font-extrabold mb-3" style={{ color: PURPLE }}>{m.num}</div>
                 <div className="text-lg font-semibold mb-1">{m.title}</div>
                 <div className="text-sm text-white/70">{m.text}</div>
               </motion.div>
@@ -327,33 +385,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* SHOWCASE VISUALS */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.h3 {...fadeUp} className="text-3xl font-bold text-center mb-10">Inside the Experience</motion.h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            {["Voice Agent Live", "Instant Lead Response", "Calendar Auto-Booking"].map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ y: 12, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.06 }}
-                className="relative rounded-xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#1a1730] to-[#0e0c1a]"
-              >
-                <div className="absolute inset-0 opacity-50" style={{ backgroundImage: "radial-gradient(150px 60px at 20% 20%, rgba(122,101,255,0.22), transparent 70%), radial-gradient(120px 50px at 80% 60%, rgba(90,70,246,0.18), transparent 70%)" }} />
-                {/* animated sweep */}
-                <motion.div className="absolute inset-0" style={{ background: "linear-gradient(90deg, transparent 0%, rgba(124,108,253,0.22) 50%, transparent 100%)" }} initial={{ x: "-100%" }} whileInView={{ x: ["-100%", "100%"] }} viewport={{ once: true }} transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 1.2, ease: "easeInOut" }} />
-                <div className="relative p-4">
-                  <div className="text-sm text-white/70 mb-3">{t}</div>
-                  <div className="h-44 rounded-md bg-black/40 border border-white/10 overflow-hidden" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* HOW + WHAT YOU GET */}
       <section id="how" className="py-24">
         <div className="max-w-7xl mx-auto px-6">
@@ -364,7 +395,14 @@ export default function Page() {
               { icon: <Cpu className="w-10 h-10 text-[#7C6CFD]" />, title: "We Connect Everything", text: "We connect your CRM, lead forms, ad platforms, phone system, and calendar so every lead routes instantly." },
               { icon: <Zap className="w-10 h-10 text-[#7C6CFD]" />, title: "Leads Get Booked", text: "Every new lead is called automatically within 60 seconds, qualified, and booked directly on your calendar." },
             ].map((s, i) => (
-              <motion.div key={i} initial={{ y: 10, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.08 }} className="bg-[#11101a] border border-white/10 rounded-2xl p-6">
+              <motion.div
+                key={i}
+                initial={{ y: 10, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="bg-[#11101a] border border-white/10 rounded-2xl p-6"
+              >
                 <div className="mb-3">{s.icon}</div>
                 <h3 className="text-2xl font-semibold mb-2">{s.title}</h3>
                 <p className="text-sm text-white/70">{s.text}</p>
@@ -388,7 +426,7 @@ export default function Page() {
                 "Ongoing monitoring, updates, and support",
               ].map((item, i) => (
                 <motion.div key={i} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.02 }} className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-[#5A46F6] mt-1" />
+                  <CheckCircle className="w-4 h-4 mt-1" style={{ color: PURPLE }} />
                   <p className="text-gray-200">{item}</p>
                 </motion.div>
               ))}
@@ -408,7 +446,14 @@ export default function Page() {
               "Reviving old and dead leads automatically",
               "Confirming booked appointments to reduce no-shows",
             ].map((s, i) => (
-              <motion.div key={i} initial={{ y: 8, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: i * 0.06 }} className="bg-[#11101a] border border-white/10 rounded-xl p-4 flex items-center gap-3">
+              <motion.div
+                key={i}
+                initial={{ y: 8, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: i * 0.06 }}
+                className="bg-[#11101a] border border-white/10 rounded-xl p-4 flex items-center gap-3"
+              >
                 <Bot className="w-6 h-6 text-[#7C6CFD]" /> {s}
               </motion.div>
             ))}
@@ -436,14 +481,10 @@ export default function Page() {
 
             <div className="flex flex-col justify-center items-center text-center">
               <div className="text-white/70 mb-2">Estimated Revenue Lost Per Month</div>
-              <div className="text-5xl font-extrabold mb-6 text-[#5A46F6]">${monthlyLoss.toLocaleString()}</div>
+              <div className="text-5xl font-extrabold mb-6" style={{ color: PURPLE }}>${monthlyLoss.toLocaleString()}</div>
               <div className="text-white/70 mb-2">Estimated Revenue Lost Per Year</div>
               <div className="text-3xl font-bold mb-8 text-[#C8C2FF]">${yearlyLoss.toLocaleString()}</div>
-              <div className="flex gap-3">
-                <button onClick={() => setShowForm(true)} className="inline-flex items-center justify-center font-semibold px-6 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white">
-                  <PhoneCall className="w-4 h-4 mr-2" /> Test The AI Setter Now!
-                </button>
-              </div>
+              <PrimaryCTA />
             </div>
           </div>
         </div>
@@ -476,7 +517,10 @@ export default function Page() {
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(800px_320px_at_50%_0%,rgba(122,101,255,0.22),transparent_70%)]" />
         <motion.h2 {...fadeUp} className="text-5xl font-bold mb-6">Try Call Setter AI Now!</motion.h2>
         <div className="flex items-center justify-center">
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center justify-center font-bold px-10 py-4 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white text-lg">
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center justify-center font-bold px-10 py-4 rounded-md transition-colors duration-200 text-white text-lg" style={{ backgroundColor: PURPLE }}
+            onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = PURPLE_2))}
+            onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = PURPLE))}
+          >
             <Bot className="w-6 h-6 mr-2" /> Try Now!
           </button>
         </div>
@@ -486,25 +530,63 @@ export default function Page() {
       {showForm && (
         <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-          <motion.div initial={{ y: 20, opacity: 0, scale: 0.98 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 22 }} className="relative z-10 w-full max-w-md bg-[#11101a] border border-white/10 rounded-2xl p-6" role="dialog" aria-modal="true" aria-label="Test the AI Setter">
+          <motion.div
+            initial={{ y: 20, opacity: 0, scale: 0.98 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
+            className="relative z-10 w-full max-w-md bg-[#11101a] border border-white/10 rounded-2xl p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Test the AI Setter"
+          >
             <button onClick={() => setShowForm(false)} className="absolute right-3 top-3 text-white/60 hover:text-white" aria-label="Close">✕</button>
             <h3 className="text-2xl font-bold mb-2">Test The AI Setter</h3>
             <p className="text-sm text-white/70 mb-6">Enter your details and we’ll connect you with a live AI voice demo.</p>
 
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={`w-full bg-black/60 border rounded-md p-2 focus:outline-none focus:ring-2 ${errors.name ? "border-red-500 focus:ring-red-500" : "border-white/10 focus:ring-[#5A46F6]"}`} placeholder="Name" />
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className={`w-full bg-black/60 border rounded-md p-2 focus:outline-none focus:ring-2 ${
+                    errors.name ? "border-red-500 focus:ring-red-500" : "border-white/10"
+                  }`}
+                  style={!errors.name ? ({ boxShadow: `0 0 0 0 rgba(0,0,0,0)` } as any) : undefined}
+                  placeholder="Name"
+                />
                 {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
               </div>
               <div>
-                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={`w-full bg-black/60 border rounded-md p-2 focus:outline-none focus:ring-2 ${errors.email ? "border-red-500 focus:ring-red-500" : "border-white/10 focus:ring-[#5A46F6]"}`} placeholder="Email" />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className={`w-full bg-black/60 border rounded-md p-2 focus:outline-none focus:ring-2 ${
+                    errors.email ? "border-red-500 focus:ring-red-500" : "border-white/10"
+                  }`}
+                  placeholder="Email"
+                />
                 {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email}</p>}
               </div>
               <div>
-                <input inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={`w-full bg-black/60 border rounded-md p-2 focus:outline-none focus:ring-2 ${errors.phone ? "border-red-500 focus:ring-red-500" : "border-white/10 focus:ring-[#5A46F6]"}`} placeholder="Phone" />
+                <input
+                  inputMode="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className={`w-full bg-black/60 border rounded-md p-2 focus:outline-none focus:ring-2 ${
+                    errors.phone ? "border-red-500 focus:ring-red-500" : "border-white/10"
+                  }`}
+                  placeholder="Phone"
+                />
                 {errors.phone && <p className="text-xs text-red-400 mt-1">{errors.phone}</p>}
               </div>
-              <button type="submit" className="w-full inline-flex items-center justify-center font-semibold px-6 py-3 rounded-md transition-colors duration-200 bg-[#5A46F6] hover:bg-[#7C6CFD] text-white">
+              <button
+                type="submit"
+                className="w-full inline-flex items-center justify-center font-semibold px-6 py-3 rounded-md transition-colors duration-200 text-white"
+                style={{ backgroundColor: PURPLE }}
+                onMouseEnter={(e) => ((e.currentTarget.style.backgroundColor = PURPLE_2))}
+                onMouseLeave={(e) => ((e.currentTarget.style.backgroundColor = PURPLE))}
+              >
                 Submit
               </button>
               {submitted && <p className="text-center text-sm text-emerald-400">Success! We'll be in touch shortly.</p>}
