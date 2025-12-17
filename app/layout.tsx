@@ -1,16 +1,12 @@
-import "./globals.css";
-
 export const metadata = {
-  title: "Call Setter AI",
-  description: "AI voice agents that call, qualify, and book inbound leads.",
+  title: "CallSetter.ai — AI Appointment Setter",
+  description: "Increase Your Booked Appointments By 25% In 30 Days Guaranteed."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="bg-ink">
-      <body className="min-h-screen bg-ink text-white antialiased">
-        {children}
-      </body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   );
 }
