@@ -1,4 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-html,body{background:#0a0a0a;color:white;}
+
+/* Minimal global theme */
+html, body {
+  background: #0a0a0a;
+  color: white;
+}
