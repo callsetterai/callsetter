@@ -1,26 +1,27 @@
 {
-  "name": "call-setter-ai",
-  "private": true,
+  "name": "callsetter-ai-site",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "framer-motion": "10.18.0",
-    "lucide-react": "0.460.0",
-    "next": "14.2.5",
+    "autoprefixer": "^10.4.18",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.468.0",
+    "next": "14.2.4",
+    "postcss": "^8.4.35",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "tailwindcss": "^3.4.10"
   },
   "devDependencies": {
-    "@types/node": "20.11.30",
-    "@types/react": "18.2.66",
-    "@types/react-dom": "18.2.22",
-    "autoprefixer": "10.4.20",
-    "postcss": "8.4.47",
-    "tailwindcss": "3.4.13",
-    "typescript": "5.6.3"
+    "@types/node": "^20.11.19",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "typescript": "^5.6.2"
   }
 }
