@@ -5,82 +5,65 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown, CheckCircle, Zap, PhoneCall, Cpu, Bot } from "lucide-react";
 
 /**
- * Call Setter AI — Purple Edition
- * - Brand-wide purple theme to match your logo
- * - Modern hero with ANIMATED sound waves + hex field (no phone outlines)
- * - Rectangular CTAs (rounded-md), high contrast
- * - Modal form (name, email, phone) on all CTAs
- * - Sections per your brief, with tighter spacing and stronger hierarchy
+ * Call Setter AI — Purple + Video Waves
+ * - Uses /public/logo-callsetterai.png
+ * - Video soundwaves background (upload /public/soundwaves.webm + /public/soundwaves.mp4)
+ * - Animated SVG waves as automatic fallback
+ * - All brand accents switched to purple
+ * - CTAs are rectangular (rounded-md)
  */
 
-const LOGO_SRC = "/logo-callsetterai.png"; // upload your logo file to public/logo-callsetterai.png
+const LOGO_SRC = "/logo-callsetterai.png";
 
-/* ---------- Backgrounds: Hex Field + Sound Waves (purple) ---------- */
+/* --------- Hero Backgrounds --------- */
 
-function HexField() {
+/** Video soundwaves (preferred) with gradient overlays */
+function HeroVideoBG() {
   return (
-    <svg
-      aria-hidden
-      className="absolute inset-0 -z-20 w-full h-full opacity-[0.18]"
-      viewBox="0 0 1200 800"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <path id="hx" d="M15 0 L30 8.66 L30 25.98 L15 34.64 L0 25.98 L0 8.66 Z" />
-        <pattern id="hexp" width="45" height="39" patternUnits="userSpaceOnUse">
-          <use href="#hx" fill="none" stroke="rgba(122,101,255,0.45)" strokeWidth="1" x="0" y="0" />
-          <use href="#hx" fill="none" stroke="rgba(90,70,246,0.35)" strokeWidth="1" x="45" y="0" />
-          <use href="#hx" fill="none" stroke="rgba(122,101,255,0.3)" strokeWidth="1" x="22.5" y="19.5" />
-          <use href="#hx" fill="none" stroke="rgba(90,70,246,0.28)" strokeWidth="1" x="67.5" y="19.5" />
-        </pattern>
-      </defs>
+    <div className="absolute inset-0 -z-20 overflow-hidden">
+      <video
+        className="w-full h-full object-cover opacity-40"
+        autoPlay
+        playsInline
+        muted
+        loop
+        poster=""
+      >
+        <source src="/soundwaves.webm" type="video/webm" />
+        <source src="/soundwaves.mp4" type="video/mp4" />
+      </video>
 
-      <motion.rect
-        initial={{ opacity: 0.4, y: 12 }}
-        animate={{ opacity: [0.4, 0.6, 0.4], y: [12, 0, 12] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        width="120%"
-        height="120%"
-        x="-10%"
-        y="-10%"
-        fill="url(#hexp)"
-      />
-    </svg>
+      {/* Purple wash + top vignette */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(122,101,255,0.25),transparent_60%),radial-gradient(900px_460px_at_90%_10%,rgba(90,70,246,0.22),transparent_70%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[var(--brand-ink)]" />
+      </div>
+    </div>
   );
 }
 
-function SoundWaves() {
-  // three layered sine paths drifting horizontally, purple hues
+/** SVG fallback waves (shows if video can’t load) */
+function SVGWaveFallback() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10">
-      <motion.svg
-        className="absolute left-1/2 top-[18%] -translate-x-1/2 w-[1600px] h-[420px]"
-        viewBox="0 0 1600 420"
-        fill="none"
-      >
+      <motion.svg className="absolute left-1/2 top-[18%] -translate-x-1/2 w-[1600px] h-[420px]" viewBox="0 0 1600 420" fill="none">
         <motion.path
           d="M0 210 C 200 120, 450 300, 700 210 S 1200 120, 1600 210"
-          stroke="rgba(122,101,255,0.55)"
-          strokeWidth="2"
-          strokeLinecap="round"
+          stroke="rgba(122,101,255,0.55)" strokeWidth="2" strokeLinecap="round"
           initial={{ pathLength: 0.85, opacity: 0.8, x: -60 }}
           animate={{ pathLength: [0.85, 1, 0.85], opacity: [0.8, 1, 0.8], x: [-60, 60, -60] }}
           transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.path
           d="M0 260 C 240 170, 520 330, 760 260 S 1240 170, 1600 260"
-          stroke="rgba(90,70,246,0.55)"
-          strokeWidth="2"
-          strokeLinecap="round"
+          stroke="rgba(90,70,246,0.55)" strokeWidth="2" strokeLinecap="round"
           initial={{ pathLength: 0.75, opacity: 0.7, x: 40 }}
           animate={{ pathLength: [0.75, 0.95, 0.75], opacity: [0.7, 0.9, 0.7], x: [40, -40, 40] }}
           transition={{ duration: 9.6, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.path
           d="M0 160 C 260 90, 520 230, 780 160 S 1300 90, 1600 160"
-          stroke="rgba(255,255,255,0.18)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
+          stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" strokeLinecap="round"
           initial={{ pathLength: 0.65, opacity: 0.5, x: 0 }}
           animate={{ pathLength: [0.65, 0.92, 0.65], opacity: [0.5, 0.75, 0.5], x: [0, 30, 0] }}
           transition={{ duration: 7.6, repeat: Infinity, ease: "easeInOut" }}
@@ -90,7 +73,7 @@ function SoundWaves() {
   );
 }
 
-/* ----------------------------- Page Component ----------------------------- */
+/* ----------------------------- Page ----------------------------- */
 
 export default function Page() {
   const [leads, setLeads] = useState(300);
@@ -103,7 +86,7 @@ export default function Page() {
   const [submitted, setSubmitted] = useState(false);
 
   const { scrollY } = useScroll();
-  const heroFade = useTransform(scrollY, [0, 200], [1, 0.92]);
+  const heroFade = useTransform(scrollY, [0, 240], [1, 0.9]);
 
   const monthlyLoss = useMemo(
     () => Math.round(leads * (closeRate / 100) * revenuePerCustomer * 0.2),
@@ -156,8 +139,8 @@ export default function Page() {
 
   return (
     <div className="relative">
-      {/* ============================ NAVBAR ============================ */}
-      <header className={`fixed top-0 left-0 w-full z-50 border-b border-white/10 transition-all duration-300 ${scrolled ? "bg-[#0b0a12]/85 backdrop-blur-md py-2" : "bg-[#0b0a12]/60 py-4"}`}>
+      {/* NAVBAR */}
+      <header className={`fixed top-0 left-0 w-full z-50 border-b border-white/10 transition-all duration-300 ${scrolled ? "bg-[var(--brand-ink)]/85 backdrop-blur-md py-2" : "bg-[var(--brand-ink)]/60 py-4"}`}>
         <div className="container-xl flex items-center justify-between">
           <a href="#top" className="flex items-center gap-3">
             <img src={LOGO_SRC} alt="Call Setter AI" className="h-8 w-auto" />
@@ -169,12 +152,11 @@ export default function Page() {
         </div>
       </header>
 
-      {/* ============================ HERO ============================ */}
+      {/* HERO */}
       <motion.section id="top" style={{ opacity: heroFade }} className="relative min-h-screen flex flex-col justify-center items-center text-center overflow-hidden pt-28">
-        {/* Purple gradient wash */}
-        <div className="absolute inset-0 -z-30 bg-[radial-gradient(1200px_600px_at_50%_-10%,rgba(122,101,255,0.18),transparent_60%),radial-gradient(900px_460px_at_90%_10%,rgba(90,70,246,0.16),transparent_70%)]" />
-        <HexField />
-        <SoundWaves />
+        {/* Video background + fallback SVG */}
+        <HeroVideoBG />
+        <SVGWaveFallback />
 
         <motion.h1 {...fadeUp} className="text-5xl md:text-6xl font-extrabold max-w-4xl leading-tight tracking-tight">
           Increase Your Booked Appointments By 25% In 30 Days Guaranteed
@@ -196,7 +178,7 @@ export default function Page() {
         </motion.div>
       </motion.section>
 
-      {/* ============================ WHY ============================ */}
+      {/* WHY */}
       <section id="why" className="py-20 text-center">
         <div className="container-xl">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-4">Why Speed-to-Lead Works</motion.h2>
@@ -220,7 +202,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ OUTCOME ============================ */}
+      {/* OUTCOME */}
       <section className="py-24 bg-[#0f0e18]">
         <div className="container-xl text-center">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-6 max-w-3xl mx-auto">
@@ -235,7 +217,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ HOW + WHAT YOU GET ============================ */}
+      {/* HOW + WHAT YOU GET */}
       <section id="how" className="py-24">
         <div className="container-xl">
           <motion.h2 {...fadeUp} className="text-4xl font-bold text-center mb-12">We Do Everything. You Get Bookings.</motion.h2>
@@ -246,7 +228,7 @@ export default function Page() {
               { icon: <Zap className="w-10 h-10 text-[var(--brand-purple)]" />, title: "Leads Get Booked", text: "Every new lead is called automatically within 60 seconds, qualified, and booked directly on your calendar." },
             ].map((s, i) => (
               <motion.div key={i} initial={{ y: 10, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.08 }} className="card p-6">
-                <div className="mb-3">{s.icon}</div>
+                <div className="mb-3">{ s.icon }</div>
                 <h3 className="text-2xl font-semibold mb-2">{s.title}</h3>
                 <p className="text-sm text-muted">{s.text}</p>
               </motion.div>
@@ -279,7 +261,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ SERVICES ============================ */}
+      {/* SERVICES */}
       <section id="services" className="py-24 bg-[#0f0e18]">
         <div className="container-xl">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-12 text-center">Everything CallSetter.ai Handles For You</motion.h2>
@@ -298,7 +280,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ ROI ============================ */}
+      {/* ROI */}
       <section id="roi" className="py-24">
         <div className="container-xl">
           <motion.h2 {...fadeUp} className="text-4xl font-bold text-center mb-4">Calculate Your Lost Revenue</motion.h2>
@@ -332,11 +314,11 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ FAQ ============================ */}
+      {/* FAQ */}
       <section id="faq" className="py-24 bg-[#0f0e18]">
         <div className="container-xl">
           <motion.h2 {...fadeUp} className="text-4xl font-bold mb-12 text-center">FAQ</motion.h2>
-          <div className="space-y-4 max-w-5xl mx-auto">
+        <div className="space-y-4 max-w-5xl mx-auto">
             {[
               { q: "Will this sound robotic?", a: "No. The voice is natural and designed for real conversations." },
               { q: "How fast can we go live?", a: "Most clients are live within a few days." },
@@ -354,9 +336,9 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ FINAL CTA ============================ */}
+      {/* FINAL CTA */}
       <section id="cta" className="py-24 text-center relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(800px_320px_at_50%_0%,rgba(122,101,255,0.2),transparent_70%)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(800px_320px_at_50%_0%,rgba(122,101,255,0.22),transparent_70%)]" />
         <motion.h2 {...fadeUp} className="text-5xl font-bold mb-6">Try Call Setter AI Now!</motion.h2>
         <div className="flex items-center justify-center gap-3">
           <button onClick={() => setShowForm(true)} className="btn btn-primary px-10 py-4 text-lg">
@@ -368,7 +350,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ============================ MODAL FORM ============================ */}
+      {/* MODAL FORM */}
       {showForm && (
         <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowForm(false)} />
