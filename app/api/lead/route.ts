@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const WEBHOOK =
-  "https://hook.us2.make.com/685m5t1n8mbrsw27es0jar8s1tqb2ns7";
+// ✅ UPDATED Make webhook URL (new one you provided)
+const WEBHOOK = "https://hook.us2.make.com/hudfblwk7d3fo3ia12hynljn45v38bhc";
 
 export async function GET() {
-  // Helpful sanity check: visit /api/lead in browser
+  // sanity check route
   return NextResponse.json({ ok: true, route: "/api/lead", method: "GET" });
 }
 
@@ -15,7 +15,6 @@ export async function POST(req: Request) {
   try {
     let payload: any = null;
 
-    // Some environments can throw on req.json() if body is empty/invalid.
     try {
       payload = await req.json();
     } catch (e: any) {
@@ -25,7 +24,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Basic validation to avoid sending junk
     if (!payload?.name || !payload?.email || !payload?.phone) {
       return NextResponse.json(
         { ok: false, error: "Missing required fields: name, email, phone" },
@@ -37,7 +35,6 @@ export async function POST(req: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Some webhook providers behave better with a user-agent
         "User-Agent": "callsetter-vercel-api/1.0",
       },
       body: JSON.stringify(payload),
@@ -59,7 +56,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Make often returns empty body — that's fine.
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err: any) {
     console.error("API /api/lead ERROR:", err);
