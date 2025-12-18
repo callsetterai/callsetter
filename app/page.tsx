@@ -16,10 +16,10 @@ import {
 
 /**
  * CallSetter.ai — App Router Page
- * - Uses Tailwind everywhere
- * - Single CTA opens modal (name/email/phone -> webhook)
+ * - Tailwind styled
+ * - Single CTA opens modal (name/email/phone -> /api/lead)
  * - Futuristic hex-wave canvas background in hero + outcome
- * - Logo uses /public/logo.png (already in your repo)
+ * - Logo uses /public/logo.png
  */
 
 const BRAND = {
@@ -28,7 +28,7 @@ const BRAND = {
   ink: "#F3F4F6",
 };
 
-const LOGO_SRC = "/logo.png"; // you already have public/logo.png
+const LOGO_SRC = "/logo.png"; // public/logo.png
 
 function formatMoney(n: number) {
   return n.toLocaleString(undefined, {
@@ -74,7 +74,14 @@ function HexWaveBackground({ opacity = 0.85 }: { opacity?: number }) {
     ctx.clearRect(0, 0, w, h);
 
     // Glow
-    const g = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, Math.max(w, h));
+    const g = ctx.createRadialGradient(
+      w * 0.5,
+      h * 0.45,
+      0,
+      w * 0.5,
+      h * 0.45,
+      Math.max(w, h)
+    );
     g.addColorStop(0, "rgba(109,94,243,0.18)");
     g.addColorStop(1, "rgba(109,94,243,0.02)");
     ctx.fillStyle = g;
@@ -143,18 +150,28 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  const webhook = "https://hook.us2.make.com/685m5t1n8mbrsw27es0jar8s1tqb2ns7";
+  // IMPORTANT: call our server route (avoids CORS)
+  const endpoint = "/api/lead";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("loading");
     try {
-      const res = await fetch(webhook, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone, source: "callsetter.vercel.app" }),
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          source: "callsetter.vercel.app",
+          timestamp: new Date().toISOString(),
+        }),
       });
-      if (!res.ok) throw new Error("Webhook failed");
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) throw new Error("Request failed");
+
       setStatus("success");
     } catch {
       setStatus("error");
@@ -170,7 +187,11 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <button className="absolute inset-0 bg-black/70" onClick={onClose} aria-label="Close overlay" />
+          <button
+            className="absolute inset-0 bg-black/70"
+            onClick={onClose}
+            aria-label="Close overlay"
+          />
           <motion.div
             className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0E0E16] shadow-2xl"
             initial={{ y: 24, opacity: 0, scale: 0.98 }}
@@ -179,7 +200,9 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           >
             <div
               className="absolute -inset-1 opacity-30 blur-2xl"
-              style={{ background: `radial-gradient(1200px_600px_at_50%_-20%, ${BRAND.purple}22, transparent 55%)` }}
+              style={{
+                background: `radial-gradient(1200px_600px_at_50%_-20%, ${BRAND.purple}22, transparent 55%)`,
+              }}
             />
             <div className="relative p-6 md:p-8">
               <div className="flex items-start justify-between gap-6">
@@ -189,7 +212,10 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                     Enter your info. Our AI voice agent will call you to demo how instant qualification feels.
                   </p>
                 </div>
-                <button onClick={onClose} className="rounded-xl border border-white/10 p-2 text-white/80 hover:text-white">
+                <button
+                  onClick={onClose}
+                  className="rounded-xl border border-white/10 p-2 text-white/80 hover:text-white"
+                >
                   <X />
                 </button>
               </div>
