@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
   ChevronDown,
@@ -22,7 +22,7 @@ const BRAND = {
   nearWhite: "#F3F4F6",
 };
 
-const LOGO_SRC = "/logo.png"; // public/logo.png
+const LOGO_SRC = "/logo.png";
 
 const formatMoney = (n: number): string =>
   Number.isFinite(n)
@@ -50,7 +50,7 @@ function useRaf(callback: () => void): void {
   }, [callback]);
 }
 
-/* ================= HEX WAVE BACKGROUND ================= */
+/* ================= HEX BACKGROUND ================= */
 
 function HexWaveBackground({
   intensity = 1,
@@ -66,12 +66,14 @@ function HexWaveBackground({
   useRaf(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.clientWidth * dpr;
     const h = canvas.clientHeight * dpr;
+
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
@@ -132,9 +134,14 @@ function HexWaveBackground({
       }
     }
 
-    // Soft sweep band (adds “movement” feel)
+    // Sweep band
     const sweepY = (Math.sin(t * 0.9) * 0.5 + 0.5) * h;
-    const sweep = ctx.createLinearGradient(0, sweepY - 120 * dpr, 0, sweepY + 120 * dpr);
+    const sweep = ctx.createLinearGradient(
+      0,
+      sweepY - 120 * dpr,
+      0,
+      sweepY + 120 * dpr
+    );
     sweep.addColorStop(0, "rgba(109,94,243,0)");
     sweep.addColorStop(0.5, "rgba(109,94,243,0.18)");
     sweep.addColorStop(1, "rgba(109,94,243,0)");
@@ -160,7 +167,7 @@ function HexWaveBackground({
   );
 }
 
-/* ================= LEAD MODAL ================= */
+/* ================= MODAL ================= */
 
 function LeadModal({
   open,
@@ -252,6 +259,7 @@ function LeadModal({
             onClick={onClose}
             aria-label="Close overlay"
           />
+
           <motion.div
             className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0E0E16] shadow-2xl"
             initial={{ y: 24, opacity: 0, scale: 0.98 }}
@@ -358,17 +366,23 @@ function LeadModal({
                   <div className="mt-6 flex items-center justify-center gap-3">
                     <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <div className="text-3xl font-black">{hours}</div>
-                      <div className="text-xs uppercase tracking-wide text-white/60">hours</div>
+                      <div className="text-xs uppercase tracking-wide text-white/60">
+                        hours
+                      </div>
                     </div>
                     <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <div className="text-3xl font-black">{minutes}</div>
-                      <div className="text-xs uppercase tracking-wide text-white/60">minutes</div>
+                      <div className="text-xs uppercase tracking-wide text-white/60">
+                        minutes
+                      </div>
                     </div>
                     <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <div className="text-3xl font-black text-[var(--brand)]">
                         {seconds.toString().padStart(2, "0")}
                       </div>
-                      <div className="text-xs uppercase tracking-wide text-white/60">seconds</div>
+                      <div className="text-xs uppercase tracking-wide text-white/60">
+                        seconds
+                      </div>
                     </div>
                   </div>
 
@@ -403,7 +417,7 @@ function LeadModal({
   );
 }
 
-/* ================= PAGE SECTIONS ================= */
+/* ================= SECTIONS ================= */
 
 function Nav({ onOpen }: { onOpen: () => void }) {
   return (
@@ -417,7 +431,10 @@ function Nav({ onOpen }: { onOpen: () => void }) {
           <a href="#get" className="hover:text-white">What You Get</a>
           <a href="#who" className="hover:text-white">Who It’s For</a>
           <a href="#faq" className="hover:text-white">FAQs</a>
-          <button onClick={onOpen} className="rounded-2xl bg-[var(--brand)] px-4 py-2 font-semibold text-[#0B0B10]">
+          <button
+            onClick={onOpen}
+            className="rounded-2xl bg-[var(--brand)] px-4 py-2 font-semibold text-[#0B0B10]"
+          >
             Test Now
           </button>
         </nav>
@@ -435,7 +452,7 @@ function Metrics() {
   ];
 
   return (
-    <section className="relative py-16 md:py-24">
+    <section className="py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4">
         <div className="text-center mb-10">
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Why Speed-to-Lead Works</h2>
@@ -449,34 +466,6 @@ function Metrics() {
               <div className="mt-1 text-sm opacity-75">{it.desc}</div>
             </div>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Outcome() {
-  return (
-    <section className="relative py-16 md:py-24 overflow-hidden">
-      <div className="absolute inset-0 -z-10 pointer-events-none">
-        <HexWaveBackground intensity={1.1} opacity={0.6} />
-        <svg className="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <circle key={i} cx="600" cy="280" r={(i + 1) * 80} fill="none" stroke="rgba(109,94,243,0.25)" strokeWidth="1" />
-          ))}
-        </svg>
-      </div>
-      <div className="mx-auto max-w-5xl px-4 text-center relative z-10">
-        <h2 className="text-4xl md:text-5xl font-bold tracking-tight max-w-4xl mx-auto">
-          Respond To All Leads Within 60 Seconds And Take Leads 24/7
-        </h2>
-        <p className="mt-6 text-lg opacity-85 max-w-3xl mx-auto">
-          By calling new leads in under 60 seconds and following up consistently, businesses typically see a 15 to 25 percent increase in booked appointments within the first 30 days.
-        </p>
-        <div className="mt-6 grid gap-2 font-semibold">
-          <div>No changes to ads.</div>
-          <div>No new hires.</div>
-          <div>Just faster, consistent execution.</div>
         </div>
       </div>
     </section>
@@ -504,7 +493,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how" className="relative py-16 md:py-24">
+    <section id="how" className="py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4">
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 md:p-10">
           <div className="text-center">
@@ -563,7 +552,7 @@ function ROICalc({ onOpen }: { onOpen: () => void }) {
   );
 
   return (
-    <section className="relative py-16 md:py-24">
+    <section className="py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4">
         <div className="text-center mb-8">
           <h3 className="text-4xl md:text-5xl font-bold tracking-tight">Calculate Your Lost Revenue</h3>
@@ -645,7 +634,7 @@ function FAQ() {
   ];
 
   return (
-    <section id="faq" className="relative py-16 md:py-24">
+    <section id="faq" className="py-16 md:py-24">
       <div className="mx-auto max-w-4xl px-4">
         <h3 className="text-4xl md:text-5xl font-bold tracking-tight text-center">FAQ</h3>
         <div className="mt-8 space-y-3">
@@ -666,12 +655,23 @@ function FAQ() {
 
 function FinalCTA({ onOpen }: { onOpen: () => void }) {
   return (
-    <section className="relative py-20 md:py-28 overflow-hidden">
-      <div className="absolute inset-0 -z-10 pointer-events-none">
+    <section className="relative overflow-hidden py-20 md:py-28">
+      {/* IMPORTANT: z-0 background, not negative */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <HexWaveBackground intensity={1.2} opacity={0.85} mask />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(900px 520px at 50% 0%, rgba(109,94,243,0.22), transparent 60%)",
+          }}
+        />
       </div>
-      <div className="mx-auto max-w-5xl px-4 text-center">
-        <h3 className="text-4xl md:text-6xl font-extrabold tracking-tight">Try Call Setter AI Now!</h3>
+
+      <div className="relative z-10 mx-auto max-w-5xl px-4 text-center">
+        <h3 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+          Try Call Setter AI Now!
+        </h3>
         <div className="mt-8 flex items-center justify-center">
           <button
             onClick={onOpen}
@@ -689,7 +689,8 @@ function FinalCTA({ onOpen }: { onOpen: () => void }) {
 function Footer() {
   return (
     <footer className="relative overflow-hidden border-t border-white/10">
-      <div className="absolute inset-0 -z-10 pointer-events-none">
+      {/* IMPORTANT: z-0 background, not negative */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <HexWaveBackground intensity={1.0} opacity={0.35} mask={false} />
         <div
           className="absolute inset-0"
@@ -700,9 +701,11 @@ function Footer() {
         />
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
         <img src={LOGO_SRC} alt="CallSetter.ai" className="h-7 w-auto opacity-90" />
-        <div className="text-sm opacity-70">© {new Date().getFullYear()} CallSetter.ai — All rights reserved.</div>
+        <div className="text-sm opacity-70">
+          © {new Date().getFullYear()} CallSetter.ai — All rights reserved.
+        </div>
       </div>
     </footer>
   );
@@ -716,9 +719,6 @@ export default function Page() {
   useEffect(() => {
     document.documentElement.style.setProperty("--brand", BRAND.purple);
   }, []);
-
-  const { scrollYProgress } = useScroll();
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, -120]);
 
   return (
     <div
@@ -738,12 +738,14 @@ export default function Page() {
       <main className="pt-16">
         {/* HERO */}
         <section className="relative overflow-hidden pt-10 md:pt-16 min-h-[78vh]">
-          <div className="absolute inset-0 -z-10 pointer-events-none">
+          {/* IMPORTANT: z-0 background, not negative */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
             <HexWaveBackground intensity={1.1} opacity={0.95} mask />
             <div className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,255,255,.14),transparent_60%)] mix-blend-overlay" />
           </div>
 
-          <motion.div style={{ y: heroY }} className="relative">
+          {/* CONTENT ABOVE BACKGROUND */}
+          <div className="relative z-10">
             <div className="mx-auto max-w-6xl px-4 text-center py-14 md:py-20">
               <div className="flex items-center justify-center gap-3 opacity-95">
                 <img src={LOGO_SRC} alt="CallSetter.ai" className="h-10 w-auto" />
@@ -769,12 +771,12 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* Sound-wave bars */}
+              {/* SOUND WAVE BARS */}
               <div className="mt-10 flex items-end justify-center gap-1 h-12" aria-hidden>
                 {Array.from({ length: 26 }).map((_, i) => (
                   <motion.span
                     key={i}
-                    className="w-1 rounded-full bg-[var(--brand)]/80"
+                    className="w-1 rounded-full bg-[var(--brand)]/90"
                     initial={{ height: 6 }}
                     animate={{ height: [6, 30, 12, 26, 10, 34, 6] }}
                     transition={{
@@ -787,11 +789,10 @@ export default function Page() {
                 ))}
               </div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         <Metrics />
-        <Outcome />
         <HowItWorks />
         <ROICalc onOpen={() => setModal(true)} />
         <FAQ />
