@@ -2,7 +2,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "CallSetter.ai",
-  description: "AI appointment setter that calls, qualifies, and books inbound leads.",
+  description: "AI voice agents that call, qualify, and book leads in under 60 seconds.",
 };
 
 export default function RootLayout({
