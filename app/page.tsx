@@ -558,3 +558,149 @@ export default function Page() {
     </div>
   );
 }
+
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { PhoneCall, X, ShieldCheck } from "lucide-react";
+
+const LOGO_SRC = "/logo.png";
+
+function HexWaveBackground() {
+  return <div className="absolute inset-0 bg-black" />;
+}
+
+function LeadModal({ open, onClose }: any) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
+    "idle"
+  );
+
+  async function submit(e: any) {
+    e.preventDefault();
+    setStatus("loading");
+
+    try {
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          source: "callsetter.vercel.app",
+        }),
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        console.error("API FAILED:", t);
+        throw new Error("API failed");
+      }
+
+      const data = await res.json();
+      if (!data?.ok) throw new Error("Bad response");
+
+      setStatus("success");
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    }
+  }
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.form
+            onSubmit={submit}
+            className="bg-[#0E0E16] p-6 rounded-2xl w-full max-w-md border border-white/10"
+          >
+            <div className="flex justify-between mb-4">
+              <h3 className="text-xl font-bold">Test The AI Setter</h3>
+              <button type="button" onClick={onClose}>
+                <X />
+              </button>
+            </div>
+
+            {status !== "success" ? (
+              <>
+                <input
+                  required
+                  placeholder="Name"
+                  className="w-full p-3 mb-3 bg-black/40 border border-white/10 rounded"
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <input
+                  required
+                  placeholder="Email"
+                  className="w-full p-3 mb-3 bg-black/40 border border-white/10 rounded"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <input
+                  required
+                  placeholder="Phone"
+                  className="w-full p-3 mb-4 bg-black/40 border border-white/10 rounded"
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+
+                <button
+                  disabled={status === "loading"}
+                  className="w-full bg-[#6D5EF3] text-black font-bold py-3 rounded"
+                >
+                  {status === "loading" ? "Calling…" : "Call Me Now"}
+                </button>
+
+                {status === "error" && (
+                  <p className="mt-3 text-sm text-red-400">
+                    Submission failed. Check Vercel logs.
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="text-center">
+                <div className="mx-auto mb-4 h-12 w-12 rounded-xl bg-[#6D5EF3] text-black flex items-center justify-center">
+                  <ShieldCheck />
+                </div>
+                <p>You're queued for a demo call.</p>
+              </div>
+            )}
+          </motion.form>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+export default function Page() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <LeadModal open={open} onClose={() => setOpen(false)} />
+
+      <div className="text-center">
+        <img src={LOGO_SRC} className="mx-auto h-10 mb-6" />
+        <h1 className="text-5xl font-bold mb-6">
+          Increase Your Booked Appointments By 25%
+        </h1>
+        <button
+          onClick={() => setOpen(true)}
+          className="px-8 py-4 bg-[#6D5EF3] text-black font-bold rounded-xl"
+        >
+          <PhoneCall className="inline mr-2" />
+          Test The AI Setter Now
+        </button>
+      </div>
+    </div>
+  );
+}
+
