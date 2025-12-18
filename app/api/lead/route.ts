@@ -1,33 +1,36 @@
-export const runtime = "nodejs";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const payload = await req.json();
 
-    const webhook = "https://hook.us2.make.com/685m5t1n8mbrsw27es0jar8s1tqb2ns7";
+    const webhook =
+      "https://hook.us2.make.com/685m5t1n8mbrsw27es0jar8s1tqb2ns7";
 
-    const r = await fetch(webhook, {
+    const makeRes = await fetch(webhook, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
-    if (!r.ok) {
-      const text = await r.text().catch(() => "");
-      return new Response(
-        JSON.stringify({ ok: false, status: r.status, message: text || "Webhook failed" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+    const text = await makeRes.text();
+
+    if (!makeRes.ok) {
+      console.error("MAKE ERROR:", text);
+      return NextResponse.json(
+        { ok: false, error: text },
+        { status: 500 }
       );
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ ok: false, message: e?.message || "Server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    console.error("API ERROR:", err);
+    return NextResponse.json(
+      { ok: false, error: err?.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
