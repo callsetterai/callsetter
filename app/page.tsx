@@ -14,12 +14,21 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+/**
+ * CallSetter.ai — App Router Page
+ * - Styling unchanged
+ * - Form confirmation upgraded to Atlas-style countdown (60s)
+ * - Collects First Name only + uses it in confirmation
+ * - Still posts to /api/lead (server route -> Make)
+ */
+
 const BRAND = {
   purple: "#6D5EF3",
 };
 
 const LOGO_SRC = "/logo.png";
 
+/* ================= RAF ================= */
 function useRaf(cb: () => void) {
   const raf = useRef<number | null>(null);
   useEffect(() => {
@@ -34,6 +43,7 @@ function useRaf(cb: () => void) {
   }, [cb]);
 }
 
+/* ================= HEX BACKGROUND ================= */
 function HexWaveBackground({ opacity = 0.85 }: { opacity?: number }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -53,6 +63,7 @@ function HexWaveBackground({ opacity = 0.85 }: { opacity?: number }) {
 
     ctx.clearRect(0, 0, w, h);
 
+    // Glow
     const g = ctx.createRadialGradient(
       w * 0.5,
       h * 0.45,
@@ -83,6 +94,7 @@ function HexWaveBackground({ opacity = 0.85 }: { opacity?: number }) {
         const wave = Math.sin(d / 90 - t) * 0.5 + 0.5;
         const a = 0.05 + wave * 0.22;
 
+        // Hex outline
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {
           const ang = (Math.PI / 3) * i + t * 0.04;
@@ -94,6 +106,7 @@ function HexWaveBackground({ opacity = 0.85 }: { opacity?: number }) {
         ctx.strokeStyle = `rgba(255,255,255,${a * opacity})`;
         ctx.stroke();
 
+        // Node
         ctx.beginPath();
         ctx.arc(cx, cy, (1.2 + wave * 2.0) * dpr, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(109,94,243,${a * 1.2 * opacity})`;
@@ -111,14 +124,27 @@ function HexWaveBackground({ opacity = 0.85 }: { opacity?: number }) {
   );
 }
 
+/* ================= MODAL ================= */
 function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
   );
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Atlas-style countdown
+  const [secondsLeft, setSecondsLeft] = useState(60);
+
+  useEffect(() => {
+    if (status !== "success") return;
+    setSecondsLeft(60);
+    const id = window.setInterval(() => {
+      setSecondsLeft((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [status]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -130,7 +156,9 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
+          // keep `name` for webhook compatibility
+          name: firstName,
+          firstName,
           email,
           phone,
           source: "callsetter.vercel.app",
@@ -138,21 +166,17 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         }),
       });
 
-      // Always read text first to avoid JSON parse crashes
       const raw = await res.text();
       let data: any = {};
       try {
         data = raw ? JSON.parse(raw) : {};
       } catch {
-        data = { ok: false, error: "Non-JSON response from server", response: raw };
+        data = { ok: false, error: "Non-JSON response", response: raw };
       }
 
       if (!res.ok || !data?.ok) {
         const msg =
-          data?.error ||
-          data?.details ||
-          data?.response ||
-          `Request failed (${res.status})`;
+          data?.error || data?.details || data?.response || `Request failed (${res.status})`;
         setErrorMsg(typeof msg === "string" ? msg : JSON.stringify(msg));
         setStatus("error");
         return;
@@ -164,6 +188,10 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       setStatus("error");
     }
   }
+
+  const hours = Math.floor(secondsLeft / 3600);
+  const minutes = Math.floor((secondsLeft % 3600) / 60);
+  const seconds = secondsLeft % 60;
 
   return (
     <AnimatePresence>
@@ -179,6 +207,7 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             onClick={onClose}
             aria-label="Close overlay"
           />
+
           <motion.div
             className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0E0E16] shadow-2xl"
             initial={{ y: 24, opacity: 0, scale: 0.98 }}
@@ -191,14 +220,18 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                 background: `radial-gradient(1200px_600px_at_50%_-20%, ${BRAND.purple}22, transparent 55%)`,
               }}
             />
+
             <div className="relative p-6 md:p-8">
               <div className="flex items-start justify-between gap-6">
                 <div>
-                  <h3 className="text-2xl font-bold tracking-tight">Test The AI Setter</h3>
+                  <h3 className="text-2xl font-bold tracking-tight">
+                    Test Call Setter AI Now
+                  </h3>
                   <p className="mt-2 text-sm text-white/75">
-                    Enter your info. Our AI voice agent will call you to demo how instant qualification feels.
+                    Our AI voice agent will call you instantly to demo how instant qualification feels.
                   </p>
                 </div>
+
                 <button
                   onClick={onClose}
                   className="rounded-xl border border-white/10 p-2 text-white/80 hover:text-white"
@@ -210,15 +243,16 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               {status !== "success" ? (
                 <form onSubmit={submit} className="mt-6 grid gap-4">
                   <div>
-                    <label className="text-sm text-white/80">Name</label>
+                    <label className="text-sm text-white/80">First Name</label>
                     <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       required
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
-                      placeholder="Jane Doe"
+                      placeholder="John"
                     />
                   </div>
+
                   <div>
                     <label className="text-sm text-white/80">Email</label>
                     <input
@@ -227,9 +261,10 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       required
                       type="email"
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
-                      placeholder="jane@company.com"
+                      placeholder="john@company.com"
                     />
                   </div>
+
                   <div>
                     <label className="text-sm text-white/80">Phone</label>
                     <input
@@ -267,11 +302,47 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                   <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[var(--brand)] text-[#0B0B10]">
                     <ShieldCheck />
                   </div>
-                  <h4 className="mt-4 text-xl font-bold">You’re queued for a demo call.</h4>
-                  <p className="mt-2 text-white/75">Keep your phone nearby — the AI will dial you shortly.</p>
+
+                  <h4 className="mt-5 text-2xl md:text-3xl font-extrabold tracking-tight">
+                    WAIT! {firstName ? `${firstName}, ` : ""}
+                    Emma (Our AI Sales Agent) Is About To Call You Any Second...
+                  </h4>
+
+                  <div className="mt-6 flex items-center justify-center gap-3">
+                    <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <div className="text-3xl font-black">{hours}</div>
+                      <div className="text-xs uppercase tracking-wide text-white/60">hours</div>
+                    </div>
+                    <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <div className="text-3xl font-black">{minutes}</div>
+                      <div className="text-xs uppercase tracking-wide text-white/60">minutes</div>
+                    </div>
+                    <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <div className="text-3xl font-black text-[var(--brand)]">
+                        {seconds.toString().padStart(2, "0")}
+                      </div>
+                      <div className="text-xs uppercase tracking-wide text-white/60">seconds</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+                    <div className="font-semibold">Here’s what’s about to happen:</div>
+                    <div className="mt-3 space-y-3 text-sm text-white/80">
+                      <div>
+                        1️⃣ Your phone will ring in under 60 seconds (Make sure it’s not on Do Not Disturb or you’ll miss the magic!)
+                      </div>
+                      <div>
+                        2️⃣ Emma will introduce herself and ask about your business (FYI: She’s very curious. Please be nice to her 😉)
+                      </div>
+                      <div>
+                        3️⃣ She’ll get a sense of your current situation and offer to book a free demo call if it seems like the right fit for ya. No-strings-attached.
+                      </div>
+                    </div>
+                  </div>
+
                   <button
                     onClick={onClose}
-                    className="mt-6 rounded-2xl bg-[var(--brand)] px-6 py-3 font-semibold text-[#0B0B10]"
+                    className="mt-6 rounded-2xl border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white/90 hover:text-white"
                   >
                     Close
                   </button>
@@ -285,6 +356,7 @@ function LeadModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
+/* ================= MAIN PAGE ================= */
 export default function Page() {
   const [modal, setModal] = useState(false);
 
@@ -303,10 +375,18 @@ export default function Page() {
             <img src={LOGO_SRC} alt="CallSetter.ai" className="h-7 w-auto" />
           </div>
           <nav className="hidden items-center gap-6 text-sm text-white/80 md:flex">
-            <a href="#how" className="hover:text-white">How It Works</a>
-            <a href="#get" className="hover:text-white">What You Get</a>
-            <a href="#who" className="hover:text-white">Who It’s For</a>
-            <a href="#faq" className="hover:text-white">FAQs</a>
+            <a href="#how" className="hover:text-white">
+              How It Works
+            </a>
+            <a href="#get" className="hover:text-white">
+              What You Get
+            </a>
+            <a href="#who" className="hover:text-white">
+              Who It’s For
+            </a>
+            <a href="#faq" className="hover:text-white">
+              FAQs
+            </a>
             <button
               onClick={() => setModal(true)}
               className="rounded-2xl bg-[var(--brand)] px-4 py-2 font-semibold text-[#0B0B10]"
@@ -328,12 +408,12 @@ export default function Page() {
           <img src={LOGO_SRC} alt="CallSetter.ai" className="mx-auto h-10 w-auto opacity-95" />
           <h1 className="mt-8 text-balance text-5xl font-extrabold tracking-tight md:text-7xl">
             Increase Your Booked Appointments{" "}
-            <span className="text-[var(--brand)]">By 25%</span>{" "}
-            In 30 Days{" "}
+            <span className="text-[var(--brand)]">By 25%</span> In 30 Days{" "}
             <span className="text-[var(--brand)]">Guaranteed</span>
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg text-white/80">
-            CallSetter.ai builds AI voice agents that instantly call, qualify, and book inbound leads so high-spending advertisers capture demand before competitors do.
+            CallSetter.ai builds AI voice agents that instantly call, qualify, and book inbound leads so high-spending
+            advertisers capture demand before competitors do.
           </p>
 
           <div className="mt-10 flex justify-center">
@@ -348,8 +428,12 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Keep the rest of your sections as-is (unchanged styling) */}
-      {/* ... */}
+      {/* IMPORTANT:
+          Everything below this point stays exactly as your current working page.
+          If your repo currently includes more sections (metrics/outcome/how/faq/footer etc.),
+          paste them back here unchanged. */}
+
+      {/* (Leave the rest of your existing sections below as-is) */}
     </div>
   );
 }
