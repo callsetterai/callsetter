@@ -22,7 +22,7 @@ const BRAND = {
   nearWhite: "#F3F4F6",
 };
 
-const LOGO_SRC = "/logo.png"; // you have public/logo.png
+const LOGO_SRC = "/logo.png"; // public/logo.png
 
 const formatMoney = (n: number): string =>
   Number.isFinite(n)
@@ -35,17 +35,12 @@ const formatMoney = (n: number): string =>
 
 /* ================= RAF ================= */
 
-function useRaf(callback: (dt: number) => void): void {
+function useRaf(callback: () => void): void {
   const rafRef = useRef<number | null>(null);
-  const lastRef = useRef<number>(0);
 
   useEffect(() => {
-    lastRef.current = performance.now();
     const loop = () => {
-      const now = performance.now();
-      const dt = (now - lastRef.current) / 1000;
-      lastRef.current = now;
-      callback(dt);
+      callback();
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
@@ -60,9 +55,11 @@ function useRaf(callback: (dt: number) => void): void {
 function HexWaveBackground({
   intensity = 1,
   opacity = 0.9,
+  mask = true,
 }: {
   intensity?: number;
   opacity?: number;
+  mask?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -82,17 +79,24 @@ function HexWaveBackground({
 
     ctx.clearRect(0, 0, w, h);
 
-    // glow
-    const g = ctx.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.45, Math.max(w, h));
-    g.addColorStop(0, "rgba(109,94,243,0.18)");
-    g.addColorStop(1, "rgba(109,94,243,0.02)");
+    // Glow
+    const g = ctx.createRadialGradient(
+      w * 0.5,
+      h * 0.45,
+      0,
+      w * 0.5,
+      h * 0.45,
+      Math.max(w, h)
+    );
+    g.addColorStop(0, "rgba(109,94,243,0.28)");
+    g.addColorStop(1, "rgba(109,94,243,0.03)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
 
-    const size = 24 * dpr;
+    const size = 26 * dpr;
     const hexH = Math.sin(Math.PI / 3) * size;
     const hexW = size * 1.5;
-    const t = performance.now() / 1200;
+    const t = performance.now() / 1100;
 
     ctx.lineWidth = 1 * dpr;
 
@@ -103,10 +107,10 @@ function HexWaveBackground({
         const cy = yy;
 
         const d = Math.hypot(cx - w / 2, cy - h / 2);
-        const wave = Math.sin(d / (80 * intensity) - t) * 0.5 + 0.5;
-        const a = 0.06 + wave * 0.28 * opacity;
+        const wave = Math.sin(d / (78 * intensity) - t) * 0.5 + 0.5;
+        const a = 0.06 + wave * 0.34 * opacity;
 
-        // hex outline
+        // Hex outline
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {
           const ang = (Math.PI / 3) * i + t * 0.06;
@@ -116,24 +120,41 @@ function HexWaveBackground({
           else ctx.lineTo(px, py);
         }
         ctx.closePath();
-        ctx.strokeStyle = `rgba(255,255,255,${a * 0.35})`;
+        ctx.strokeStyle = `rgba(255,255,255,${a * 0.5})`;
         ctx.stroke();
 
-        // node
-        const r = 1.5 * dpr + wave * 2.2 * dpr;
+        // Node
+        const r = 1.5 * dpr + wave * 2.6 * dpr;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(109,94,243,${a})`;
         ctx.fill();
       }
     }
+
+    // Soft sweep band (adds “movement” feel)
+    const sweepY = (Math.sin(t * 0.9) * 0.5 + 0.5) * h;
+    const sweep = ctx.createLinearGradient(0, sweepY - 120 * dpr, 0, sweepY + 120 * dpr);
+    sweep.addColorStop(0, "rgba(109,94,243,0)");
+    sweep.addColorStop(0.5, "rgba(109,94,243,0.18)");
+    sweep.addColorStop(1, "rgba(109,94,243,0)");
+    ctx.fillStyle = sweep;
+    ctx.fillRect(0, sweepY - 140 * dpr, w, 280 * dpr);
   });
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 h-full w-full pointer-events-none opacity-90
-      [mask-image:radial-gradient(ellipse_at_center,black_60%,transparent_85%)]"
+      className="absolute inset-0 h-full w-full pointer-events-none"
+      style={{
+        opacity,
+        WebkitMaskImage: mask
+          ? "radial-gradient(ellipse at center, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 86%)"
+          : undefined,
+        maskImage: mask
+          ? "radial-gradient(ellipse at center, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 86%)"
+          : undefined,
+      }}
       aria-hidden
     />
   );
@@ -151,10 +172,11 @@ function LeadModal({
   const [firstName, setFirstName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
+    "idle"
+  );
   const [errorMsg, setErrorMsg] = useState<string>("");
 
-  // 60s countdown on success
   const [secondsLeft, setSecondsLeft] = useState<number>(60);
 
   useEffect(() => {
@@ -176,7 +198,6 @@ function LeadModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // Keep `name` for Make compatibility, but collect/display first name only.
           name: firstName,
           firstName,
           email,
@@ -188,12 +209,18 @@ function LeadModal({
 
       const raw = await res.text();
       const data: unknown = raw ? JSON.parse(raw) : {};
-      const ok = typeof data === "object" && data !== null && "ok" in data ? (data as any).ok : false;
+      const ok =
+        typeof data === "object" && data !== null && "ok" in data
+          ? (data as any).ok
+          : false;
 
       if (!res.ok || !ok) {
         const msg =
           typeof data === "object" && data !== null
-            ? ((data as any).error || (data as any).details || (data as any).response || `Request failed (${res.status})`)
+            ? (data as any).error ||
+              (data as any).details ||
+              (data as any).response ||
+              `Request failed (${res.status})`
             : `Request failed (${res.status})`;
         setErrorMsg(String(msg));
         setStatus("error");
@@ -220,7 +247,11 @@ function LeadModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <button className="absolute inset-0 bg-black/70" onClick={onClose} aria-label="Close overlay" />
+          <button
+            className="absolute inset-0 bg-black/70"
+            onClick={onClose}
+            aria-label="Close overlay"
+          />
           <motion.div
             className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0E0E16] shadow-2xl"
             initial={{ y: 24, opacity: 0, scale: 0.98 }}
@@ -236,7 +267,9 @@ function LeadModal({
             <div className="relative p-6 md:p-8">
               <div className="flex items-start justify-between gap-6">
                 <div>
-                  <h3 className="text-2xl font-bold tracking-tight">Test Call Setter AI Now</h3>
+                  <h3 className="text-2xl font-bold tracking-tight">
+                    Test Call Setter AI Now
+                  </h3>
                   <p className="mt-2 text-sm text-white/75">
                     Our AI voice agent will call you instantly to demo how instant qualification feels.
                   </p>
@@ -255,7 +288,9 @@ function LeadModal({
                     <label className="text-sm text-white/80">First Name</label>
                     <input
                       value={firstName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setFirstName(e.target.value)
+                      }
                       required
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
                       placeholder="John"
@@ -266,7 +301,9 @@ function LeadModal({
                     <label className="text-sm text-white/80">Email</label>
                     <input
                       value={email}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setEmail(e.target.value)
+                      }
                       required
                       type="email"
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
@@ -278,7 +315,9 @@ function LeadModal({
                     <label className="text-sm text-white/80">Phone</label>
                     <input
                       value={phone}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setPhone(e.target.value)
+                      }
                       required
                       className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
                       placeholder="+1 (555) 123-4567"
@@ -300,7 +339,9 @@ function LeadModal({
                   {status === "error" && (
                     <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
                       <div className="font-semibold">Submission failed</div>
-                      <div className="mt-1 break-words opacity-90">{errorMsg || "Unknown error"}</div>
+                      <div className="mt-1 break-words opacity-90">
+                        {errorMsg || "Unknown error"}
+                      </div>
                     </div>
                   )}
                 </form>
@@ -335,16 +376,13 @@ function LeadModal({
                     <div className="font-semibold">Here’s what’s about to happen:</div>
                     <div className="mt-3 space-y-3 text-sm text-white/80">
                       <div>
-                        1️⃣ Your phone will ring in under 60 seconds (Make sure it’s not on Do Not Disturb or you’ll
-                        miss the magic!)
+                        1️⃣ Your phone will ring in under 60 seconds (Make sure it’s not on Do Not Disturb or you’ll miss the magic!)
                       </div>
                       <div>
-                        2️⃣ Emma will introduce herself and ask about your business (FYI: She’s very curious. Please be
-                        nice to her 😉)
+                        2️⃣ Emma will introduce herself and ask about your business (FYI: She’s very curious. Please be nice to her 😉)
                       </div>
                       <div>
-                        3️⃣ She’ll get a sense of your current situation and offer to book a free demo call if it seems
-                        like the right fit for ya. No-strings-attached.
+                        3️⃣ She’ll get a sense of your current situation and offer to book a free demo call if it seems like the right fit for ya. No-strings-attached.
                       </div>
                     </div>
                   </div>
@@ -365,7 +403,7 @@ function LeadModal({
   );
 }
 
-/* ================= PAGE ================= */
+/* ================= PAGE SECTIONS ================= */
 
 function Nav({ onOpen }: { onOpen: () => void }) {
   return (
@@ -508,42 +546,21 @@ function HowItWorks() {
   );
 }
 
-function Services() {
-  const services = [
-    "24/7 AI receptionist answering inbound calls",
-    "Calling every new web lead within 60 seconds",
-    "Reviving old and dead leads automatically",
-    "Confirming booked appointments to reduce no-shows",
-  ];
-
-  return (
-    <section className="relative py-16 md:py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <h3 className="text-4xl md:text-5xl font-bold tracking-tight max-w-3xl">
-          Everything CallSetter.ai Handles For You
-        </h3>
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {services.map((s) => (
-            <div key={s} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <div className="font-semibold">{s}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ROICalc({ onOpen }: { onOpen: () => void }) {
   const [leads, setLeads] = useState<number>(300);
   const [closeRate, setCloseRate] = useState<number>(10);
   const [revPer, setRevPer] = useState<number>(1500);
-
   const lift = 0.2;
 
-  const lostMonthly = useMemo(() => Math.max(0, leads * (closeRate / 100) * revPer * lift), [leads, closeRate, revPer]);
+  const lostMonthly = useMemo(
+    () => Math.max(0, leads * (closeRate / 100) * revPer * lift),
+    [leads, closeRate, revPer]
+  );
   const lostYearly = lostMonthly * 12;
-  const extraCustomers = useMemo(() => Math.max(0, leads * (closeRate / 100) * lift), [leads, closeRate]);
+  const extraCustomers = useMemo(
+    () => Math.max(0, leads * (closeRate / 100) * lift),
+    [leads, closeRate]
+  );
 
   return (
     <section className="relative py-16 md:py-24">
@@ -619,42 +636,6 @@ function ROICalc({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-function ForWho() {
-  const examples = [
-    "Lead generation agencies",
-    "Local and national service businesses",
-    "High-ticket sales teams",
-    "Advertisers buying inbound leads at scale",
-  ];
-
-  return (
-    <section id="who" className="relative py-16 md:py-24">
-      <div className="mx-auto max-w-6xl px-4 grid md:grid-cols-2 gap-8">
-        <div>
-          <h3 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Built for Businesses That Book Appointments for Revenue
-          </h3>
-          <p className="mt-4 opacity-85">
-            CallSetter.ai is designed for businesses where booked appointments directly drive sales.
-            If you generate leads, rely on scheduled calls, or spend over five thousand per month on ads, faster response time is not optional.
-            It is the difference between winning and losing the deal.
-          </p>
-        </div>
-        <div>
-          <ul className="space-y-3">
-            {examples.map((x) => (
-              <li key={x} className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-[var(--brand)]" />
-                <span className="font-medium">{x}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function FAQ() {
   const faqs = [
     { q: "Will this sound robotic?", a: "No. The voice is natural and designed for real conversations." },
@@ -687,7 +668,7 @@ function FinalCTA({ onOpen }: { onOpen: () => void }) {
   return (
     <section className="relative py-20 md:py-28 overflow-hidden">
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <HexWaveBackground intensity={1.2} opacity={0.85} />
+        <HexWaveBackground intensity={1.2} opacity={0.85} mask />
       </div>
       <div className="mx-auto max-w-5xl px-4 text-center">
         <h3 className="text-4xl md:text-6xl font-extrabold tracking-tight">Try Call Setter AI Now!</h3>
@@ -707,14 +688,27 @@ function FinalCTA({ onOpen }: { onOpen: () => void }) {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/10 py-10">
-      <div className="mx-auto max-w-6xl px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+    <footer className="relative overflow-hidden border-t border-white/10">
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <HexWaveBackground intensity={1.0} opacity={0.35} mask={false} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(900px 500px at 50% 0%, rgba(109,94,243,0.18), transparent 60%)",
+          }}
+        />
+      </div>
+
+      <div className="mx-auto max-w-6xl px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
         <img src={LOGO_SRC} alt="CallSetter.ai" className="h-7 w-auto opacity-90" />
         <div className="text-sm opacity-70">© {new Date().getFullYear()} CallSetter.ai — All rights reserved.</div>
       </div>
     </footer>
   );
 }
+
+/* ================= PAGE ================= */
 
 export default function Page() {
   const [modal, setModal] = useState<boolean>(false);
@@ -723,7 +717,6 @@ export default function Page() {
     document.documentElement.style.setProperty("--brand", BRAND.purple);
   }, []);
 
-  // subtle parallax on hero content
   const { scrollYProgress } = useScroll();
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -120]);
 
@@ -744,15 +737,15 @@ export default function Page() {
 
       <main className="pt-16">
         {/* HERO */}
-        <section className="relative overflow-hidden pt-10 md:pt-16">
+        <section className="relative overflow-hidden pt-10 md:pt-16 min-h-[78vh]">
           <div className="absolute inset-0 -z-10 pointer-events-none">
-            <HexWaveBackground />
+            <HexWaveBackground intensity={1.1} opacity={0.95} mask />
             <div className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,255,255,.14),transparent_60%)] mix-blend-overlay" />
           </div>
 
           <motion.div style={{ y: heroY }} className="relative">
             <div className="mx-auto max-w-6xl px-4 text-center py-14 md:py-20">
-              <div className="flex items-center justify-center gap-3 opacity-90">
+              <div className="flex items-center justify-center gap-3 opacity-95">
                 <img src={LOGO_SRC} alt="CallSetter.ai" className="h-10 w-auto" />
               </div>
 
@@ -776,16 +769,16 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* animated bars */}
-              <div className="mt-10 flex items-end justify-center gap-1 h-10" aria-hidden>
-                {Array.from({ length: 24 }).map((_, i) => (
+              {/* Sound-wave bars */}
+              <div className="mt-10 flex items-end justify-center gap-1 h-12" aria-hidden>
+                {Array.from({ length: 26 }).map((_, i) => (
                   <motion.span
                     key={i}
                     className="w-1 rounded-full bg-[var(--brand)]/80"
                     initial={{ height: 6 }}
-                    animate={{ height: [6, 28, 12, 22, 10, 30, 6] }}
+                    animate={{ height: [6, 30, 12, 26, 10, 34, 6] }}
                     transition={{
-                      duration: 2,
+                      duration: 2.1,
                       repeat: Infinity,
                       delay: i * 0.05,
                       ease: "easeInOut",
@@ -800,9 +793,7 @@ export default function Page() {
         <Metrics />
         <Outcome />
         <HowItWorks />
-        <Services />
         <ROICalc onOpen={() => setModal(true)} />
-        <ForWho />
         <FAQ />
         <FinalCTA onOpen={() => setModal(true)} />
       </main>
