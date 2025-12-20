@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// ✅ UPDATED Make webhook URL (new one you provided)
-const WEBHOOK = "https://hook.us2.make.com/hudfblwk7d3fo3ia12hynljn45v38bhc";
+// ✅ UPDATED webhook URL (n8n)
+const WEBHOOK = "https://callsetter.app.n8n.cloud/webhook/form-opt-in";
 
 export async function GET() {
   // sanity check route
