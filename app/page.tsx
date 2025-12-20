@@ -656,7 +656,6 @@ function FAQ() {
 function FinalCTA({ onOpen }: { onOpen: () => void }) {
   return (
     <section className="relative overflow-hidden py-20 md:py-28">
-      {/* IMPORTANT: z-0 background, not negative */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <HexWaveBackground intensity={1.2} opacity={0.85} mask />
         <div
@@ -689,7 +688,6 @@ function FinalCTA({ onOpen }: { onOpen: () => void }) {
 function Footer() {
   return (
     <footer className="relative overflow-hidden border-t border-white/10">
-      {/* IMPORTANT: z-0 background, not negative */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <HexWaveBackground intensity={1.0} opacity={0.35} mask={false} />
         <div
@@ -736,15 +734,12 @@ export default function Page() {
       <LeadModal open={modal} onClose={() => setModal(false)} />
 
       <main className="pt-16">
-        {/* HERO */}
         <section className="relative overflow-hidden pt-10 md:pt-16 min-h-[78vh]">
-          {/* IMPORTANT: z-0 background, not negative */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <HexWaveBackground intensity={1.1} opacity={0.95} mask />
             <div className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,255,255,.14),transparent_60%)] mix-blend-overlay" />
           </div>
 
-          {/* CONTENT ABOVE BACKGROUND */}
           <div className="relative z-10">
             <div className="mx-auto max-w-6xl px-4 text-center py-14 md:py-20">
               <div className="flex items-center justify-center gap-3 opacity-95">
@@ -771,7 +766,6 @@ export default function Page() {
                 </button>
               </div>
 
-              {/* SOUND WAVE BARS */}
               <div className="mt-10 flex items-end justify-center gap-1 h-12" aria-hidden>
                 {Array.from({ length: 26 }).map((_, i) => (
                   <motion.span
