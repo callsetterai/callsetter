@@ -1,4 +1,5 @@
-import { cn } from "@/lib/cn";
+import { cn } from "../lib/cn";
+
 import Pill from "@/components/Pill";
 
 export default function SectionHeader({
