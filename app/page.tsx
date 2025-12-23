@@ -1,799 +1,854 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowRight,
   Check,
   ChevronDown,
+  Mail,
   Phone,
-  PhoneCall,
-  Rocket,
   ShieldCheck,
   Timer,
+  User,
   X,
-  Zap,
 } from "lucide-react";
 
-/* ================= THEME ================= */
-
-const BRAND = {
-  purple: "#6D5EF3",
-  nearBlack: "#0A0A0F",
-  nearWhite: "#F3F4F6",
-};
-
-const LOGO_SRC = "/logo.png";
-
-const formatMoney = (n: number): string =>
-  Number.isFinite(n)
-    ? n.toLocaleString(undefined, {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0,
-      })
-    : "$0";
-
-/* ================= RAF ================= */
-
-function useRaf(callback: () => void): void {
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const loop = () => {
-      callback();
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    };
-  }, [callback]);
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
 }
 
-/* ================= HEX BACKGROUND ================= */
-
-function HexWaveBackground({
-  intensity = 1,
-  opacity = 0.9,
-  mask = true,
-}: {
-  intensity?: number;
-  opacity?: number;
-  mask?: boolean;
-}) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useRaf(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth * dpr;
-    const h = canvas.clientHeight * dpr;
-
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-    }
-
-    ctx.clearRect(0, 0, w, h);
-
-    // Glow
-    const g = ctx.createRadialGradient(
-      w * 0.5,
-      h * 0.45,
-      0,
-      w * 0.5,
-      h * 0.45,
-      Math.max(w, h)
-    );
-    g.addColorStop(0, "rgba(109,94,243,0.28)");
-    g.addColorStop(1, "rgba(109,94,243,0.03)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-
-    const size = 26 * dpr;
-    const hexH = Math.sin(Math.PI / 3) * size;
-    const hexW = size * 1.5;
-    const t = performance.now() / 1100;
-
-    ctx.lineWidth = 1 * dpr;
-
-    for (let yy = -size; yy < h + size; yy += hexH * 2) {
-      for (let xx = -size; xx < w + size; xx += hexW) {
-        const offset = (Math.floor(yy / (hexH * 2)) % 2) * (hexW / 2);
-        const cx = xx + offset;
-        const cy = yy;
-
-        const d = Math.hypot(cx - w / 2, cy - h / 2);
-        const wave = Math.sin(d / (78 * intensity) - t) * 0.5 + 0.5;
-        const a = 0.06 + wave * 0.34 * opacity;
-
-        // Hex outline
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const ang = (Math.PI / 3) * i + t * 0.06;
-          const px = cx + size * Math.cos(ang);
-          const py = cy + size * Math.sin(ang);
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = `rgba(255,255,255,${a * 0.5})`;
-        ctx.stroke();
-
-        // Node
-        const r = 1.5 * dpr + wave * 2.6 * dpr;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(109,94,243,${a})`;
-        ctx.fill();
-      }
-    }
-
-    // Sweep band
-    const sweepY = (Math.sin(t * 0.9) * 0.5 + 0.5) * h;
-    const sweep = ctx.createLinearGradient(
-      0,
-      sweepY - 120 * dpr,
-      0,
-      sweepY + 120 * dpr
-    );
-    sweep.addColorStop(0, "rgba(109,94,243,0)");
-    sweep.addColorStop(0.5, "rgba(109,94,243,0.18)");
-    sweep.addColorStop(1, "rgba(109,94,243,0)");
-    ctx.fillStyle = sweep;
-    ctx.fillRect(0, sweepY - 140 * dpr, w, 280 * dpr);
-  });
-
+function Pill({ children }: { children: React.ReactNode }) {
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 h-full w-full pointer-events-none"
-      style={{
-        opacity,
-        WebkitMaskImage: mask
-          ? "radial-gradient(ellipse at center, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 86%)"
-          : undefined,
-        maskImage: mask
-          ? "radial-gradient(ellipse at center, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 86%)"
-          : undefined,
-      }}
-      aria-hidden
-    />
+    <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+      {children}
+    </span>
   );
 }
 
-/* ================= MODAL ================= */
+function SectionHeader({
+  kicker,
+  title,
+  subtitle,
+  dark = false,
+}: {
+  kicker?: string;
+  title: string;
+  subtitle?: string;
+  dark?: boolean;
+}) {
+  return (
+    <div className="text-center">
+      {kicker ? (
+        <div className="mb-3 flex justify-center">
+          <Pill>{kicker}</Pill>
+        </div>
+      ) : null}
+      <h2 className={cn("text-2xl sm:text-3xl font-bold tracking-tight", dark && "text-white")}>
+        {title}
+      </h2>
+      {subtitle ? (
+        <p className={cn("mt-3 text-sm sm:text-base", dark ? "text-white/70" : "text-zinc-600")}>
+          {subtitle}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
-function LeadModal({
+function StatCard({
+  title,
+  value,
+  subtitle,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="text-xs font-semibold text-indigo-600">{title}</div>
+      <div className="mt-2 text-2xl font-extrabold tracking-tight text-zinc-900">{value}</div>
+      <div className="mt-2 text-sm text-zinc-600">{subtitle}</div>
+    </div>
+  );
+}
+
+function FeatureCard({
+  title,
+  bullets,
+  dark = false,
+}: {
+  title: string;
+  bullets: string[];
+  dark?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border p-6 shadow-sm",
+        dark ? "border-white/10 bg-zinc-950/70" : "border-zinc-200 bg-white"
+      )}
+    >
+      <div className={cn("text-base font-bold", dark ? "text-white" : "text-zinc-900")}>
+        {title}
+      </div>
+      <ul className={cn("mt-3 space-y-2 text-sm", dark ? "text-white/70" : "text-zinc-600")}>
+        {bullets.map((b, i) => (
+          <li key={i} className="flex gap-2">
+            <span className={cn("mt-1 h-1.5 w-1.5 rounded-full", dark ? "bg-indigo-300" : "bg-indigo-600")} />
+            <span>{b}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ComparisonTable() {
+  const rows = [
+    { label: "Calls new leads within 60 seconds", a: true, b: false },
+    { label: "Works 24/7, nights and weekends", a: true, b: false },
+    { label: "Qualifies leads and filters time wasters", a: true, b: true },
+    { label: "Books appointments automatically", a: true, b: true },
+    { label: "Revives old and dead leads", a: true, b: false },
+    { label: "Notes pushed to CRM, no guesswork", a: true, b: true },
+    { label: "Consistent follow up, no missed leads", a: true, b: false },
+  ];
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div className="border-b border-zinc-200 bg-zinc-50 px-5 py-4">
+        <div className="text-sm font-semibold text-zinc-900">CallSetterAI vs Manual Appointment Setters</div>
+        <div className="mt-1 text-xs text-zinc-600">Speed beats busy.</div>
+      </div>
+
+      <div className="grid grid-cols-12 px-5 py-3 text-xs font-semibold text-zinc-500">
+        <div className="col-span-7">Feature</div>
+        <div className="col-span-3 text-center">CallSetterAI</div>
+        <div className="col-span-2 text-center">Manual</div>
+      </div>
+
+      <div className="divide-y divide-zinc-200">
+        {rows.map((r, i) => (
+          <div key={i} className="grid grid-cols-12 items-center px-5 py-3">
+            <div className="col-span-7 text-sm text-zinc-800">{r.label}</div>
+            <div className="col-span-3 text-center">
+              <span
+                className={cn(
+                  "inline-flex rounded-full px-2 py-1 text-xs font-semibold border",
+                  r.a ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                )}
+              >
+                {r.a ? "Yes" : "No"}
+              </span>
+            </div>
+            <div className="col-span-2 text-center">
+              <span
+                className={cn(
+                  "inline-flex rounded-full px-2 py-1 text-xs font-semibold border",
+                  r.b ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                )}
+              >
+                {r.b ? "Yes" : "No"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Calculator() {
+  const [leads, setLeads] = useState(1000);
+  const [closeRate, setCloseRate] = useState(10);
+  const [ticket, setTicket] = useState(1500);
+  const [recoveryRate, setRecoveryRate] = useState(1);
+
+  const res = useMemo(() => {
+    const recoveredLeads = Math.max(0, leads) * (Math.max(0, recoveryRate) / 100);
+    const customers = recoveredLeads * (Math.max(0, closeRate) / 100);
+    const revenue = customers * Math.max(0, ticket);
+    return { recoveredLeads, customers, revenue };
+  }, [leads, closeRate, ticket, recoveryRate]);
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="text-sm font-bold text-zinc-900">Calculate Your Lost Revenue</div>
+          <div className="mt-1 text-xs text-zinc-600">Simple estimator. Replace with real numbers.</div>
+        </div>
+        <div className="text-xs text-zinc-500">Monthly</div>
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-4">
+        <label className="space-y-1">
+          <div className="text-xs font-semibold text-zinc-600">Leads sitting in CRM</div>
+          <input
+            className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+            type="number"
+            value={leads}
+            onChange={(e) => setLeads(Number(e.target.value))}
+            min={0}
+          />
+        </label>
+
+        <label className="space-y-1">
+          <div className="text-xs font-semibold text-zinc-600">Close rate percent</div>
+          <input
+            className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+            type="number"
+            value={closeRate}
+            onChange={(e) => setCloseRate(Number(e.target.value))}
+            min={0}
+          />
+        </label>
+
+        <label className="space-y-1">
+          <div className="text-xs font-semibold text-zinc-600">Avg ticket value</div>
+          <input
+            className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+            type="number"
+            value={ticket}
+            onChange={(e) => setTicket(Number(e.target.value))}
+            min={0}
+          />
+        </label>
+
+        <label className="space-y-1">
+          <div className="text-xs font-semibold text-zinc-600">Recovery percent</div>
+          <input
+            className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+            type="number"
+            value={recoveryRate}
+            onChange={(e) => setRecoveryRate(Number(e.target.value))}
+            min={0}
+            step={0.25}
+          />
+        </label>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+          <div className="text-xs font-semibold text-zinc-600">Recovered revenue</div>
+          <div className="mt-1 text-2xl font-extrabold text-zinc-900">
+            {res.revenue.toLocaleString(undefined, {
+              style: "currency",
+              currency: "USD",
+              maximumFractionDigits: 0,
+            })}
+          </div>
+          <div className="mt-1 text-xs text-zinc-600">
+            {res.recoveredLeads.toFixed(0)} recovered leads, {res.customers.toFixed(1)} new customers
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-700">
+            <ShieldCheck className="h-4 w-4" />
+            <span>Make this real by tracking booked rate and show rate</span>
+          </div>
+          <div className="mt-2 text-xs text-indigo-700/80">
+            If you are not measuring a baseline, any guarantee language is marketing fluff.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FAQ() {
+  const items = [
+    {
+      q: "How fast do you contact new leads?",
+      a: "We can trigger calls and texts within 60 seconds of opt in and follow up based on your rules.",
+    },
+    {
+      q: "Do you work with my CRM?",
+      a: "If your CRM can receive webhooks or has Zapier, it is usually compatible. GHL is the easiest.",
+    },
+    {
+      q: "Does this replace my setters?",
+      a: "It replaces missed leads and inconsistent follow up, and supports your team by booking qualified calls.",
+    },
+    {
+      q: "What does the guarantee mean?",
+      a: "Define it precisely: baseline, tracking window, setup requirements, and what counts as a booked appointment.",
+    },
+  ];
+
+  const [open, setOpen] = useState<number | null>(0);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      {items.map((it, i) => {
+        const isOpen = open === i;
+        return (
+          <div key={i} className="border-b border-zinc-200 last:border-b-0">
+            <button
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+              onClick={() => setOpen(isOpen ? null : i)}
+              type="button"
+            >
+              <div className="text-sm font-semibold text-zinc-900">{it.q}</div>
+              <ChevronDown className={cn("h-4 w-4 text-zinc-500 transition", isOpen && "rotate-180")} />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {isOpen ? (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.22 }}
+                >
+                  <div className="px-5 pb-5 text-sm text-zinc-600">{it.a}</div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TryAgentModal({
   open,
   onClose,
 }: {
   open: boolean;
   onClose: () => void;
 }) {
-  const [firstName, setFirstName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [phone, setPhone] = useState<string>("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle"
-  );
-  const [errorMsg, setErrorMsg] = useState<string>("");
+  const [firstName, setFirstName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const [secondsLeft, setSecondsLeft] = useState<number>(60);
+  const canSubmit = useMemo(() => {
+    const p = phone.replace(/[^\d+]/g, "").trim();
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    return firstName.trim().length >= 1 && okEmail && p.replace(/\D/g, "").length >= 10;
+  }, [firstName, email, phone]);
 
   useEffect(() => {
-    if (status !== "success") return;
-    setSecondsLeft(60);
-    const id = window.setInterval(() => {
-      setSecondsLeft((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [status]);
+    function onKeyDown(e: KeyboardEvent) {
+      if (!open) return;
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
 
-  async function submit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
-    e.preventDefault();
-    setStatus("loading");
-    setErrorMsg("");
+  useEffect(() => {
+    if (!open) return;
+    setToast(null);
+  }, [open]);
+
+  async function onSubmit() {
+    if (!canSubmit || submitting) return;
+
+    setSubmitting(true);
+    setToast(null);
 
     try {
-      const res = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: firstName,
-          firstName,
-          email,
-          phone,
-          source: "callsetter.vercel.app",
-          timestamp: new Date().toISOString(),
-        }),
-      });
+      const payload = {
+        firstName: firstName.trim(),
+        email: email.trim(),
+        phone: phone.replace(/[^\d+]/g, "").trim(),
+        source: "try-modal",
+        ts: new Date().toISOString(),
+      };
 
-      const raw = await res.text();
-      const data: unknown = raw ? JSON.parse(raw) : {};
-      const ok =
-        typeof data === "object" && data !== null && "ok" in data
-          ? (data as any).ok
-          : false;
+      const webhook = process.env.NEXT_PUBLIC_TRY_WEBHOOK_URL;
 
-      if (!res.ok || !ok) {
-        const msg =
-          typeof data === "object" && data !== null
-            ? (data as any).error ||
-              (data as any).details ||
-              (data as any).response ||
-              `Request failed (${res.status})`
-            : `Request failed (${res.status})`;
-        setErrorMsg(String(msg));
-        setStatus("error");
+      if (!webhook) {
+        setToast("Form captured. Add NEXT_PUBLIC_TRY_WEBHOOK_URL to send this into your system.");
+        setSubmitting(false);
         return;
       }
 
-      setStatus("success");
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Network error");
-      setStatus("error");
+      const res = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Webhook failed");
+
+      setToast("Submitted. You should receive a call shortly.");
+      setFirstName("");
+      setEmail("");
+      setPhone("");
+
+      setTimeout(() => onClose(), 900);
+    } catch {
+      setToast("Something failed. Double check your webhook and try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  const hours = Math.floor(secondsLeft / 3600);
-  const minutes = Math.floor((secondsLeft % 3600) / 60);
-  const seconds = secondsLeft % 60;
-
   return (
     <AnimatePresence>
-      {open && (
+      {open ? (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          aria-modal="true"
+          role="dialog"
         >
           <button
-            className="absolute inset-0 bg-black/70"
+            className="absolute inset-0 bg-black/40"
             onClick={onClose}
-            aria-label="Close overlay"
+            aria-label="Close modal overlay"
+            type="button"
           />
 
           <motion.div
-            className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0E0E16] shadow-2xl"
-            initial={{ y: 24, opacity: 0, scale: 0.98 }}
+            initial={{ y: 18, opacity: 0, scale: 0.98 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 14, opacity: 0, scale: 0.98 }}
+            exit={{ y: 18, opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="relative w-full max-w-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0D0A2A]"
           >
-            <div
-              className="absolute -inset-1 opacity-30 blur-2xl"
-              style={{
-                background: `radial-gradient(1200px_600px_at_50%_-20%, ${BRAND.purple}22, transparent 55%)`,
-              }}
-            />
-            <div className="relative p-6 md:p-8">
-              <div className="flex items-start justify-between gap-6">
-                <div>
-                  <h3 className="text-2xl font-bold tracking-tight">
-                    Test Call Setter AI Now
-                  </h3>
-                  <p className="mt-2 text-sm text-white/75">
-                    Our AI voice agent will call you instantly to demo how instant qualification feels.
-                  </p>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="rounded-xl border border-white/10 p-2 text-white/80 hover:text-white"
-                >
-                  <X />
-                </button>
-              </div>
+            <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_20%_20%,rgba(99,102,241,0.35),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(168,85,247,0.25),transparent_50%),radial-gradient(circle_at_60%_90%,rgba(99,102,241,0.22),transparent_55%)]" />
+            <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:18px_18px]" />
 
-              {status !== "success" ? (
-                <form onSubmit={submit} className="mt-6 grid gap-4">
-                  <div>
-                    <label className="text-sm text-white/80">First Name</label>
+            <div className="relative px-6 pb-7 pt-7 sm:px-10 sm:pb-10">
+              <button
+                onClick={onClose}
+                type="button"
+                className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600/30 text-white hover:bg-indigo-600/40"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <h3 className="text-center text-3xl font-extrabold tracking-tight text-white">
+                See How Fast Your{" "}
+                <span className="text-indigo-400">Leads Get Contacted</span>
+              </h3>
+
+              <p className="mx-auto mt-3 max-w-[460px] text-center text-sm text-white/70">
+                Enter your details and we’ll show you exactly how Call Setter AI responds to new leads in real time.
+              </p>
+
+              <div className="mt-8 space-y-5">
+                <label className="block">
+                  <div className="mb-2 text-sm font-semibold text-white/85">
+                    First Name <span className="text-indigo-300">*</span>
+                  </div>
+                  <div className="relative">
                     <input
                       value={firstName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setFirstName(e.target.value)
-                      }
-                      required
-                      className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
-                      placeholder="John"
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="First Name"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-indigo-400/60"
                     />
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300/90">
+                      <User className="h-5 w-5" />
+                    </div>
                   </div>
+                </label>
 
-                  <div>
-                    <label className="text-sm text-white/80">Email</label>
+                <label className="block">
+                  <div className="mb-2 text-sm font-semibold text-white/85">
+                    Email <span className="text-indigo-300">*</span>
+                  </div>
+                  <div className="relative">
                     <input
                       value={email}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setEmail(e.target.value)
-                      }
-                      required
-                      type="email"
-                      className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
-                      placeholder="john@company.com"
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Your best email"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-indigo-400/60"
                     />
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300/90">
+                      <Mail className="h-5 w-5" />
+                    </div>
                   </div>
+                </label>
 
-                  <div>
-                    <label className="text-sm text-white/80">Phone</label>
+                <label className="block">
+                  <div className="mb-2 text-sm font-semibold text-white/85">
+                    Phone Number <span className="text-indigo-300">*</span>
+                  </div>
+                  <div className="relative">
                     <input
                       value={phone}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setPhone(e.target.value)
-                      }
-                      required
-                      className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-3 outline-none focus:border-[var(--brand)]"
-                      placeholder="+1 (555) 123-4567"
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 Phone Number"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white placeholder:text-white/45 outline-none transition focus:border-indigo-400/60"
                     />
-                  </div>
-
-                  <p className="text-xs text-white/55">
-                    By submitting, you agree to receive a one-time automated call from our demo agent.
-                  </p>
-
-                  <button
-                    disabled={status === "loading"}
-                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand)] px-5 py-3 font-semibold text-[#0B0B10] transition hover:-translate-y-[1px]"
-                  >
-                    <Phone className="h-4 w-4" />
-                    {status === "loading" ? "Connecting…" : "Call Me Now"}
-                  </button>
-
-                  {status === "error" && (
-                    <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
-                      <div className="font-semibold">Submission failed</div>
-                      <div className="mt-1 break-words opacity-90">
-                        {errorMsg || "Unknown error"}
-                      </div>
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300/90">
+                      <Phone className="h-5 w-5" />
                     </div>
+                  </div>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={onSubmit}
+                  disabled={!canSubmit || submitting}
+                  className={cn(
+                    "mt-2 w-full rounded-xl px-4 py-3 text-sm font-extrabold tracking-wide text-white transition",
+                    "bg-indigo-600 hover:bg-indigo-700",
+                    (!canSubmit || submitting) && "cursor-not-allowed opacity-60 hover:bg-indigo-600"
                   )}
-                </form>
-              ) : (
-                <div className="mt-10 text-center">
-                  <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[var(--brand)] text-[#0B0B10]">
-                    <ShieldCheck />
+                >
+                  {submitting ? "SUBMITTING..." : "TRY CALL SETTER AI NOW"}
+                </button>
+
+                {toast ? (
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">
+                    {toast}
                   </div>
+                ) : null}
 
-                  <h4 className="mt-5 text-2xl md:text-3xl font-extrabold tracking-tight">
-                    WAIT! {firstName ? `${firstName}, ` : ""}Emma (Our AI Sales Agent) Is About To Call You Any Second...
-                  </h4>
-
-                  <div className="mt-6 flex items-center justify-center gap-3">
-                    <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <div className="text-3xl font-black">{hours}</div>
-                      <div className="text-xs uppercase tracking-wide text-white/60">
-                        hours
-                      </div>
-                    </div>
-                    <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <div className="text-3xl font-black">{minutes}</div>
-                      <div className="text-xs uppercase tracking-wide text-white/60">
-                        minutes
-                      </div>
-                    </div>
-                    <div className="min-w-[92px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <div className="text-3xl font-black text-[var(--brand)]">
-                        {seconds.toString().padStart(2, "0")}
-                      </div>
-                      <div className="text-xs uppercase tracking-wide text-white/60">
-                        seconds
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
-                    <div className="font-semibold">Here’s what’s about to happen:</div>
-                    <div className="mt-3 space-y-3 text-sm text-white/80">
-                      <div>
-                        1️⃣ Your phone will ring in under 60 seconds (Make sure it’s not on Do Not Disturb or you’ll miss the magic!)
-                      </div>
-                      <div>
-                        2️⃣ Emma will introduce herself and ask about your business (FYI: She’s very curious. Please be nice to her 😉)
-                      </div>
-                      <div>
-                        3️⃣ She’ll get a sense of your current situation and offer to book a free demo call if it seems like the right fit for ya. No-strings-attached.
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={onClose}
-                    className="mt-6 rounded-2xl border border-white/10 bg-white/5 px-6 py-3 font-semibold text-white/90 hover:text-white"
-                  >
-                    Close
-                  </button>
-                </div>
-              )}
+                <p className="text-xs leading-5 text-white/60">
+                  By submitting, you agree to receive calls and texts from Call Setter AI at the number provided,
+                  including messages sent using automated or AI technology. Consent is not required to purchase. Msg and
+                  data rates may apply. Reply STOP to opt out.
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 }
 
-/* ================= SECTIONS ================= */
-
-function Nav({ onOpen }: { onOpen: () => void }) {
-  return (
-    <header className="fixed top-0 left-0 right-0 z-40 border-b border-white/10 bg-black/40 backdrop-blur">
-      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
-        <a href="#top" className="flex items-center gap-3">
-          <img src={LOGO_SRC} alt="CallSetter.ai" className="h-7 w-auto" />
-        </a>
-        <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
-          <a href="#how" className="hover:text-white">How It Works</a>
-          <a href="#get" className="hover:text-white">What You Get</a>
-          <a href="#who" className="hover:text-white">Who It’s For</a>
-          <a href="#faq" className="hover:text-white">FAQs</a>
-          <button
-            onClick={onOpen}
-            className="rounded-2xl bg-[var(--brand)] px-4 py-2 font-semibold text-[#0B0B10]"
-          >
-            Test Now
-          </button>
-        </nav>
-      </div>
-    </header>
-  );
-}
-
-function Metrics() {
-  const items = [
-    { kpi: "391%", label: "Higher Conversion", desc: "Leads contacted within the first minute convert dramatically more often." },
-    { kpi: "10x", label: "More Likely to Connect", desc: "Calling within five minutes massively increases contact rates." },
-    { kpi: "80%", label: "Drop After 5 Minutes", desc: "Contact rates collapse when response is delayed." },
-    { kpi: "24/7", label: "Instant Coverage", desc: "Leads are called day, night, and weekends." },
-  ];
-
-  return (
-    <section className="py-16 md:py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Why Speed-to-Lead Works</h2>
-          <p className="opacity-80 mt-2">The data is clear: the faster you respond, the more deals you close</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {items.map((it) => (
-            <div key={it.kpi} className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <div className="text-5xl font-black tracking-tight text-[var(--brand)]">{it.kpi}</div>
-              <div className="mt-2 font-semibold">{it.label}</div>
-              <div className="mt-1 text-sm opacity-75">{it.desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HowItWorks() {
-  const steps = [
-    { title: "We Build It", desc: "We custom-build your AI appointment setter around your offer, qualification rules, and booking flow.", Icon: Rocket },
-    { title: "We Connect Everything", desc: "We connect your CRM, lead forms, ad platforms, phone system, and calendar so every lead routes instantly.", Icon: Zap },
-    { title: "Leads Get Booked", desc: "Every new lead is called automatically within 60 seconds, qualified, and booked directly on your calendar.", Icon: Timer },
-  ];
-
-  const included = [
-    "Done-for-you AI voice appointment setter",
-    "Custom scripting and call logic built for your business",
-    "Automatic calling of every new lead within 60 seconds",
-    "Full CRM, lead source, and calendar integration",
-    "Real-time bookings sent directly to your calendar",
-    "Call recordings and transcriptions",
-    "Voice customization including tone, pace, and language",
-    "Automatic follow-up for unanswered leads",
-    "Human transfer to your team when needed",
-    "Ongoing monitoring, updates, and support",
-  ];
-
-  return (
-    <section id="how" className="py-16 md:py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 md:p-10">
-          <div className="text-center">
-            <h3 className="text-4xl md:text-5xl font-bold tracking-tight">We Do Everything. You Get Bookings.</h3>
-            <p className="opacity-80 mt-2">100% done for you. Installed inside your business. Nothing DIY. Nothing half-built.</p>
-          </div>
-
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {steps.map(({ title, desc, Icon }) => (
-              <div key={title} className="rounded-2xl border border-white/10 bg-[#0E0E16] p-6">
-                <div className="w-12 h-12 rounded-2xl bg-[var(--brand)]/20 text-[var(--brand)] grid place-items-center">
-                  <Icon />
-                </div>
-                <div className="mt-4 font-semibold text-xl">{title}</div>
-                <div className="mt-2 opacity-80 text-sm">{desc}</div>
-              </div>
-            ))}
-          </div>
-
-          <div id="get" className="mt-12 pt-8 border-t border-white/10">
-            <h4 className="text-2xl font-bold">What You Get</h4>
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
-              {included.map((line) => (
-                <div key={line} className="flex items-start gap-3 py-2">
-                  <div className="mt-1 w-5 h-5 rounded-full bg-[var(--brand)]/20 text-[var(--brand)] grid place-items-center flex-none">
-                    <Check size={14} />
-                  </div>
-                  <div className="text-sm md:text-base">{line}</div>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs opacity-60 mt-4">
-              All setup is handled inside your business. Nothing is outsourced to templates.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ROICalc({ onOpen }: { onOpen: () => void }) {
-  const [leads, setLeads] = useState<number>(300);
-  const [closeRate, setCloseRate] = useState<number>(10);
-  const [revPer, setRevPer] = useState<number>(1500);
-  const lift = 0.2;
-
-  const lostMonthly = useMemo(
-    () => Math.max(0, leads * (closeRate / 100) * revPer * lift),
-    [leads, closeRate, revPer]
-  );
-  const lostYearly = lostMonthly * 12;
-  const extraCustomers = useMemo(
-    () => Math.max(0, leads * (closeRate / 100) * lift),
-    [leads, closeRate]
-  );
-
-  return (
-    <section className="py-16 md:py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="text-center mb-8">
-          <h3 className="text-4xl md:text-5xl font-bold tracking-tight">Calculate Your Lost Revenue</h3>
-          <p className="opacity-80 mt-2">See what slow follow-up costs you.</p>
-        </div>
-
-        <div className="rounded-[28px] border border-white/10 bg-[#0E0E16]/70 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="grid gap-5">
-            <div>
-              <label className="text-sm opacity-80">Leads Per Month</label>
-              <input
-                type="number"
-                value={leads}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeads(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
-              />
-            </div>
-            <div>
-              <label className="text-sm opacity-80">Close Rate (%)</label>
-              <div className="text-xs opacity-60">Percent of leads that become customers</div>
-              <input
-                type="number"
-                value={closeRate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCloseRate(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
-              />
-            </div>
-            <div>
-              <label className="text-sm opacity-80">Revenue Per Customer</label>
-              <input
-                type="number"
-                value={revPer}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRevPer(Number(e.target.value))}
-                className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 p-3 outline-none focus:border-[var(--brand)]"
-              />
-            </div>
-            <div className="text-xs opacity-60">Assumes a 20% lift from faster response time.</div>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 grid place-items-center">
-            <div className="w-full max-w-sm text-center">
-              <div className="text-sm opacity-80">Estimated Revenue Lost Per Month</div>
-              <div className="text-5xl md:text-6xl font-black tracking-tight text-[var(--brand)] mt-2">
-                {formatMoney(lostMonthly)}
-              </div>
-
-              <div className="mt-6 text-sm opacity-80">Estimated Revenue Lost Per Year</div>
-              <div className="text-4xl md:text-5xl font-extrabold tracking-tight mt-1">
-                {formatMoney(lostYearly)}
-              </div>
-
-              <div className="mt-4 text-xs opacity-70">
-                Estimated additional customers with faster response:{" "}
-                <span className="font-semibold">{Math.round(extraCustomers)}</span>
-              </div>
-
-              <div className="mt-8">
-                <button
-                  onClick={onOpen}
-                  className="w-full rounded-2xl bg-[var(--brand)] px-5 py-3 font-semibold text-[#0B0B10]"
-                >
-                  Test The AI Setter Now!
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FAQ() {
-  const faqs = [
-    { q: "Will this sound robotic?", a: "No. The voice is natural and designed for real conversations." },
-    { q: "How fast can we go live?", a: "Most clients are live within a few days." },
-    { q: "Does this integrate with my CRM?", a: "Yes. We support GHL and non-GHL setups." },
-    { q: "What happens if a lead does not answer?", a: "The system follows up automatically based on your rules." },
-  ];
-
-  return (
-    <section id="faq" className="py-16 md:py-24">
-      <div className="mx-auto max-w-4xl px-4">
-        <h3 className="text-4xl md:text-5xl font-bold tracking-tight text-center">FAQ</h3>
-        <div className="mt-8 space-y-3">
-          {faqs.map((f) => (
-            <details key={f.q} className="group rounded-2xl border border-white/10 bg-[#0E0E16] p-4">
-              <summary className="flex items-center justify-between gap-4 cursor-pointer list-none">
-                <div className="font-semibold">{f.q}</div>
-                <ChevronDown className="transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="mt-3 opacity-80 text-sm">{f.a}</div>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FinalCTA({ onOpen }: { onOpen: () => void }) {
-  return (
-    <section className="relative overflow-hidden py-20 md:py-28">
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <HexWaveBackground intensity={1.2} opacity={0.85} mask />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(900px 520px at 50% 0%, rgba(109,94,243,0.22), transparent 60%)",
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-5xl px-4 text-center">
-        <h3 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-          Try Call Setter AI Now!
-        </h3>
-        <div className="mt-8 flex items-center justify-center">
-          <button
-            onClick={onOpen}
-            className="rounded-2xl bg-[var(--brand)] px-6 py-4 font-semibold text-[#0B0B10] inline-flex items-center gap-2"
-          >
-            <PhoneCall className="w-5 h-5" />
-            Try Now!
-          </button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="relative overflow-hidden border-t border-white/10">
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <HexWaveBackground intensity={1.0} opacity={0.35} mask={false} />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(900px 500px at 50% 0%, rgba(109,94,243,0.18), transparent 60%)",
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
-        <img src={LOGO_SRC} alt="CallSetter.ai" className="h-7 w-auto opacity-90" />
-        <div className="text-sm opacity-70">
-          © {new Date().getFullYear()} CallSetter.ai — All rights reserved.
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-/* ================= PAGE ================= */
-
 export default function Page() {
-  const [modal, setModal] = useState<boolean>(false);
-
-  useEffect(() => {
-    document.documentElement.style.setProperty("--brand", BRAND.purple);
-  }, []);
+  const [tryOpen, setTryOpen] = useState(false);
 
   return (
-    <div
-      id="top"
-      className="min-h-screen overflow-x-hidden"
-      style={{ background: BRAND.nearBlack, color: BRAND.nearWhite }}
-    >
-      <style>{`
-        :root { --brand: ${BRAND.purple}; }
-        html, body { height: 100%; overflow-x: hidden; }
-        body { overflow-y: auto; }
-      `}</style>
-
-      <Nav onOpen={() => setModal(true)} />
-      <LeadModal open={modal} onClose={() => setModal(false)} />
-
-      <main className="pt-16">
-        <section className="relative overflow-hidden pt-10 md:pt-16 min-h-[78vh]">
-          <div className="absolute inset-0 z-0 pointer-events-none">
-            <HexWaveBackground intensity={1.1} opacity={0.95} mask />
-            <div className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_0%,rgba(255,255,255,.14),transparent_60%)] mix-blend-overlay" />
+    <div className="min-h-screen bg-white">
+      <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-indigo-600" />
+            <div className="text-sm font-extrabold tracking-tight text-zinc-900">CallSetterAI</div>
           </div>
 
-          <div className="relative z-10">
-            <div className="mx-auto max-w-6xl px-4 text-center py-14 md:py-20">
-              <div className="flex items-center justify-center gap-3 opacity-95">
-                <img src={LOGO_SRC} alt="CallSetter.ai" className="h-10 w-auto" />
-              </div>
+          <nav className="hidden items-center gap-6 text-sm text-zinc-600 sm:flex">
+            <a href="#home" className="hover:text-zinc-900">Home</a>
+            <a href="#services" className="hover:text-zinc-900">Services</a>
+            <a href="#roi" className="hover:text-zinc-900">ROI Calculator</a>
+            <a href="#faqs" className="hover:text-zinc-900">FAQ’s</a>
+            <a href="#contact" className="hover:text-zinc-900">Contact</a>
+          </nav>
 
-              <h1 className="mt-6 text-5xl md:text-7xl font-extrabold tracking-tight text-balance">
-                Increase Your Booked Appointments{" "}
-                <span className="text-[var(--brand)]">By 25%</span> In 30 Days{" "}
-                <span className="text-[var(--brand)]">Guaranteed</span>
-              </h1>
+          <button className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+            BOOK A DEMO
+          </button>
+        </div>
+      </header>
 
-              <p className="mt-5 text-lg opacity-80 max-w-3xl mx-auto">
-                CallSetter.ai builds AI voice agents that instantly call, qualify, and book inbound leads so high-spending advertisers capture demand before competitors do.
+      <section id="home" className="relative overflow-hidden">
+        <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(rgba(99,102,241,0.18)_1px,transparent_1px)] [background-size:18px_18px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-50 via-white to-white" />
+
+        <div className="relative mx-auto w-full max-w-6xl px-4 py-16 sm:py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl text-zinc-900">
+              Increase Your Booked Appointments By{" "}
+              <span className="text-indigo-600">25%</span> In 30 Days Guaranteed
+            </h1>
+
+            <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg text-zinc-600">
+              We contact every inbound lead within 60 seconds, qualify them, and book appointments automatically, 24/7.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-700">
+                BOOK A DEMO <ArrowRight className="ml-2 h-4 w-4" />
+              </button>
+
+              <button
+                onClick={() => setTryOpen(true)}
+                className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-6 py-3 text-base font-semibold text-zinc-900 hover:bg-zinc-50"
+              >
+                TRY THE LIVE AGENT
+              </button>
+            </div>
+
+            <div className="mt-6 text-xs text-zinc-500">
+              Put your real guarantee terms on the page. If you cannot define baseline and tracking, this is just hype.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="services" className="py-16 sm:py-20">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <SectionHeader
+            kicker="Why Speed-to-Lead Works"
+            title="Speed wins because attention expires fast"
+            subtitle="If you call late, you are not competing, you are begging."
+          />
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Higher conversion" value="391%" subtitle="More likely to reach leads when you respond quickly." />
+            <StatCard title="More likely to connect" value="10x" subtitle="Intent is highest right after they opt in." />
+            <StatCard title="Less wasted spend" value="80%" subtitle="Fewer leads fall through the cracks." />
+            <StatCard title="More likely to qualify" value="21x" subtitle="You talk to them before competitors do." />
+          </div>
+
+          <div className="mt-14">
+            <ComparisonTable />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900">
+                Respond to all leads within 60 seconds and take leads 24/7
+              </h2>
+              <p className="mt-3 text-zinc-600">
+                You do not need more leads. You need to stop leaking the ones you already paid for.
               </p>
 
-              <div className="mt-10 flex justify-center">
-                <button
-                  onClick={() => setModal(true)}
-                  className="rounded-2xl bg-[var(--brand)] px-7 py-4 font-semibold text-[#0B0B10] inline-flex items-center gap-2 shadow-[0_14px_44px_-18px_var(--brand)] transition hover:-translate-y-[1px]"
-                >
-                  <PhoneCall className="w-5 h-5" />
-                  Test The AI Setter Now!
-                </button>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <FeatureCard
+                  title="New lead follow up"
+                  bullets={[
+                    "Calls or texts within 60 seconds of opt in",
+                    "Qualifies using your rules",
+                    "Books directly on your calendar",
+                  ]}
+                />
+                <FeatureCard
+                  title="Dead lead revival"
+                  bullets={[
+                    "Re-contacts old leads automatically",
+                    "Finds who is ready now",
+                    "Turns old ad spend into revenue",
+                  ]}
+                />
               </div>
+            </div>
 
-              <div className="mt-10 flex items-end justify-center gap-1 h-12" aria-hidden>
-                {Array.from({ length: 26 }).map((_, i) => (
-                  <motion.span
-                    key={i}
-                    className="w-1 rounded-full bg-[var(--brand)]/90"
-                    initial={{ height: 6 }}
-                    animate={{ height: [6, 30, 12, 26, 10, 34, 6] }}
-                    transition={{
-                      duration: 2.1,
-                      repeat: Infinity,
-                      delay: i * 0.05,
-                      ease: "easeInOut",
-                    }}
-                  />
-                ))}
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
+                <Timer className="h-4 w-4 text-indigo-600" />
+                <span>Live Demo Preview</span>
+              </div>
+              <div className="mt-3 aspect-[16/10] rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-indigo-50" />
+              <div className="mt-4 text-xs text-zinc-600">
+                Replace this with your real product screenshot or embedded widget.
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <Metrics />
-        <HowItWorks />
-        <ROICalc onOpen={() => setModal(true)} />
-        <FAQ />
-        <FinalCTA onOpen={() => setModal(true)} />
-      </main>
+      <section className="py-16 sm:py-20 bg-zinc-950">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <SectionHeader
+            kicker="How It Works"
+            title="We do everything, you get bookings"
+            subtitle="Simple process, no drama."
+            dark
+          />
 
-      <Footer />
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            <FeatureCard
+              dark
+              title="1. We build"
+              bullets={[
+                "Connect your forms, inbox, and CRM",
+                "Define qualification rules and routing",
+                "Set compliance and consent flows",
+              ]}
+            />
+            <FeatureCard
+              dark
+              title="2. We connect everything"
+              bullets={[
+                "Webhook based triggers",
+                "Calendar booking and reminders",
+                "CRM notes and pipeline movement",
+              ]}
+            />
+            <FeatureCard
+              dark
+              title="3. Leads get booked"
+              bullets={[
+                "Instant outreach",
+                "Dead lead revival sequences",
+                "No show reduction confirmations",
+              ]}
+            />
+          </div>
+
+          <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="text-white font-bold">What you get</div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm font-semibold text-white">Voice agent</div>
+                <div className="mt-1 text-sm text-white/70">Human sounding calls that qualify and book.</div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm font-semibold text-white">SMS follow up</div>
+                <div className="mt-1 text-sm text-white/70">Fast confirmations and reminders.</div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm font-semibold text-white">CRM automation</div>
+                <div className="mt-1 text-sm text-white/70">Notes, tags, and pipeline movement.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <SectionHeader
+            kicker="Everything handled"
+            title="Everything CallSetterAI handles for you"
+            subtitle="You should not be doing manual follow up in 2025."
+          />
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <FeatureCard title="New leads" bullets={["Instant outreach", "Qualification rules", "Calendar booking"]} />
+            <FeatureCard title="Old leads" bullets={["Revival campaigns", "Intent detection", "Rebooking flows"]} />
+            <FeatureCard title="No shows" bullets={["Confirmations", "Reminders", "Reschedule recovery"]} />
+          </div>
+        </div>
+      </section>
+
+      <section id="roi" className="py-16 sm:py-20 bg-zinc-50">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <Calculator />
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <SectionHeader
+            kicker="Built for"
+            title="Built for businesses that book appointments for revenue"
+            subtitle="If a booked call is not valuable, this is not for you."
+          />
+
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="text-sm font-bold text-zinc-900">Who this is for</div>
+              <ul className="mt-4 space-y-2 text-sm text-zinc-600">
+                <li className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 text-indigo-600" />
+                  <span>High intent inbound leads</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 text-indigo-600" />
+                  <span>Offer requires a call, consult, or demo</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 text-indigo-600" />
+                  <span>Meaningful ad spend and expensive leads</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="mt-0.5 h-4 w-4 text-indigo-600" />
+                  <span>CRM has hundreds to thousands of leads sitting</span>
+                </li>
+              </ul>
+
+              <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-xs text-zinc-600">
+                If you are not tracking booked rate, show rate, and close rate, fix that first. Then automate.
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="text-sm font-bold text-zinc-900">Sample dashboard</div>
+              <div className="mt-3 aspect-[16/10] rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-indigo-50" />
+              <div className="mt-4 text-xs text-zinc-600">
+                Replace with your real analytics screenshot.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faqs" className="py-16 sm:py-20 bg-zinc-50">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <SectionHeader kicker="FAQ" title="Frequently Asked Questions" subtitle="Stuff people ask before they buy." />
+          <div className="mt-10">
+            <FAQ />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+            <div className="text-3xl font-extrabold tracking-tight text-indigo-600">110% Money Back Guarantee</div>
+            <p className="mx-auto mt-3 max-w-2xl text-zinc-600">
+              Put the real terms here. Baseline, tracking, requirements, and what counts as a booked appointment.
+            </p>
+            <div className="mt-6">
+              <button className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-700">
+                BOOK A DEMO
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="py-16 sm:py-20 bg-zinc-950">
+        <div className="mx-auto w-full max-w-6xl px-4">
+          <SectionHeader
+            kicker="Try it"
+            title="Try Call Setter AI Now"
+            subtitle="Let prospects test the agent, then push them to book."
+            dark
+          />
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <div className="aspect-[16/10] bg-gradient-to-br from-white/10 to-indigo-500/10" />
+              <div className="p-5">
+                <div className="text-sm font-bold text-white">Emma</div>
+                <div className="mt-1 text-xs text-white/70">Appointment setting specialist</div>
+                <button
+                  onClick={() => setTryOpen(true)}
+                  className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-extrabold text-white hover:bg-indigo-700"
+                >
+                  TRY NOW
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <div className="aspect-[16/10] bg-gradient-to-br from-white/10 to-indigo-500/10" />
+              <div className="p-5">
+                <div className="text-sm font-bold text-white">Jules</div>
+                <div className="mt-1 text-xs text-white/70">Inbound qualifier</div>
+                <button
+                  onClick={() => setTryOpen(true)}
+                  className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-extrabold text-white hover:bg-indigo-700"
+                >
+                  TRY NOW
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 border-t border-white/10 pt-8 text-center text-xs text-white/50">
+            © {new Date().getFullYear()} CallSetterAI. All rights reserved.
+          </div>
+        </div>
+      </section>
+
+      <TryAgentModal open={tryOpen} onClose={() => setTryOpen(false)} />
     </div>
   );
 }
