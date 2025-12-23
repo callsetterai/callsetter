@@ -8,6 +8,46 @@ body {
 }
 
 body {
-  background: #0a0a0f;
-  color: #f3f4f6;
+  @apply bg-white text-zinc-900 antialiased;
+}
+
+.bg-dots {
+  background-image: radial-gradient(rgba(99, 102, 241, 0.18) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.card {
+  @apply rounded-2xl border border-zinc-200 bg-white shadow-sm;
+}
+
+.cardDark {
+  @apply rounded-2xl border border-white/10 bg-zinc-950/70 shadow-sm;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition;
+}
+
+.btnPrimary {
+  @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
+}
+
+.btnGhost {
+  @apply btn bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50;
+}
+
+.containerX {
+  @apply mx-auto w-full max-w-6xl px-4;
+}
+
+.h2 {
+  @apply text-2xl sm:text-3xl font-bold tracking-tight;
+}
+
+.muted {
+  @apply text-zinc-600;
+}
+
+.mutedDark {
+  @apply text-white/70;
 }
