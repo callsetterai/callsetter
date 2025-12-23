@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { ArrowRight, ShieldCheck, Timer } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import SectionHeader from "@/components/SectionHeader";
-import StatCard from "@/components/StatCard";
-import ComparisonTable from "@/components/ComparisonTable";
-import FeatureCard from "@/components/FeatureCard";
-import Calculator from "@/components/Calculator";
-import FAQ from "@/components/FAQ";
-import TryNowCard from "@/components/TryNowCard";
-import Footer from "@/components/Footer";
-import TryAgentModal from "@/components/TryAgentModal";
+
+import Navbar from "../components/Navbar";
+import SectionHeader from "../components/SectionHeader";
+import StatCard from "../components/StatCard";
+import ComparisonTable from "../components/ComparisonTable";
+import FeatureCard from "../components/FeatureCard";
+import Calculator from "../components/Calculator";
+import FAQ from "../components/FAQ";
+import TryNowCard from "../components/TryNowCard";
+import Footer from "../components/Footer";
+import TryAgentModal from "../components/TryAgentModal";
 
 export default function Page() {
   const [tryOpen, setTryOpen] = useState(false);
@@ -134,12 +135,29 @@ export default function Page() {
 
       <section className="py-16 sm:py-20 bg-zinc-950">
         <div className="containerX">
-          <SectionHeader kicker="How It Works" title="We do everything, you get bookings" subtitle="Simple process, no drama." dark />
+          <SectionHeader
+            kicker="How It Works"
+            title="We do everything, you get bookings"
+            subtitle="Simple process, no drama."
+            dark
+          />
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            <FeatureCard dark title="1. We build" bullets={["Connect your forms, inbox, and CRM", "Define rules and routing", "Set consent flows"]} />
-            <FeatureCard dark title="2. We connect everything" bullets={["Webhook triggers", "Calendar booking and reminders", "CRM notes and pipeline movement"]} />
-            <FeatureCard dark title="3. Leads get booked" bullets={["Instant outreach", "Dead lead revival", "No show reduction confirmations"]} />
+            <FeatureCard
+              dark
+              title="1. We build"
+              bullets={["Connect your forms, inbox, and CRM", "Define rules and routing", "Set consent flows"]}
+            />
+            <FeatureCard
+              dark
+              title="2. We connect everything"
+              bullets={["Webhook triggers", "Calendar booking and reminders", "CRM notes and pipeline movement"]}
+            />
+            <FeatureCard
+              dark
+              title="3. Leads get booked"
+              bullets={["Instant outreach", "Dead lead revival", "No show reduction confirmations"]}
+            />
           </div>
 
           <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -169,7 +187,11 @@ export default function Page() {
 
       <section className="py-16 sm:py-20">
         <div className="containerX">
-          <SectionHeader kicker="Everything handled" title="Everything CallSetterAI handles for you" subtitle="You should not be doing manual follow up in 2025." />
+          <SectionHeader
+            kicker="Everything handled"
+            title="Everything CallSetterAI handles for you"
+            subtitle="You should not be doing manual follow up in 2025."
+          />
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <FeatureCard title="New leads" bullets={["Instant outreach", "Qualification rules", "Calendar booking"]} />
             <FeatureCard title="Old leads" bullets={["Revival campaigns", "Intent detection", "Rebooking flows"]} />
@@ -209,7 +231,12 @@ export default function Page() {
 
       <section id="contact" className="py-16 sm:py-20 bg-zinc-950">
         <div className="containerX">
-          <SectionHeader kicker="Try it" title="Try Call Setter AI Now" subtitle="Let prospects test the agent, then push them to book." dark />
+          <SectionHeader
+            kicker="Try it"
+            title="Try Call Setter AI Now"
+            subtitle="Let prospects test the agent, then push them to book."
+            dark
+          />
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
             <TryNowCard name="Emma" role="Appointment setting specialist" onTry={() => setTryOpen(true)} />
