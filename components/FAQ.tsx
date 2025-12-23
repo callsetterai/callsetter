@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { cn } from "@/lib/cn";
+import { cn } from "../lib/cn";
 
 type Item = { q: string; a: string };
 
